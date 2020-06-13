@@ -284,7 +284,7 @@ public class PDFView extends RelativeLayout {
     /**
      * get the pdf file
      * @return the pdf file
-     * @since 1.0.0
+     * @since 10.0.0
      */
     public PdfFile getPdfFile() {
         return pdfFile;

@@ -16,18 +16,11 @@
 package com.github.barteksc.pdfviewer.util;
 
 import android.content.Context;
-import android.graphics.PointF;
 import android.util.TypedValue;
-import android.view.MotionEvent;
-
-import com.github.barteksc.pdfviewer.PDFView;
-import com.github.barteksc.pdfviewer.PdfFile;
-import com.shockwave.pdfium.util.SizeF;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Locale;
 
 public final class Util {
     private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;

@@ -9,7 +9,7 @@ import com.shockwave.pdfium.util.SizeF;
 /**
  * the pdf view utils.
  * @author heaven7
- * @since 1.0.0
+ * @since 10.0.0
  */
 public final class PdfViewUtils {
 
