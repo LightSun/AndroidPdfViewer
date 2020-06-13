@@ -16,7 +16,6 @@
 package com.github.barteksc.pdfviewer;
 
 import android.graphics.RectF;
-import android.support.annotation.Nullable;
 
 import com.github.barteksc.pdfviewer.model.PagePart;
 
@@ -136,7 +135,6 @@ class CacheManager {
         collection.add(newPart);
     }
 
-    @Nullable
     private static PagePart find(PriorityQueue<PagePart> vector, PagePart fakePart) {
         for (PagePart part : vector) {
             if (part.equals(fakePart)) {

@@ -173,6 +173,7 @@ class DragPinchManager implements GestureDetector.OnGestureListener, GestureDete
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
+        //PdfUtils.convertScreenPointToPdfPagePoint(pdfView, (int)e.getX(), (int)e.getY());
         return false;
     }
 
@@ -191,7 +192,7 @@ class DragPinchManager implements GestureDetector.OnGestureListener, GestureDete
     private void onScrollEnd(MotionEvent event) {
         pdfView.loadPages();
         hideHandle();
-        log();
+        //log();
         if (!animationManager.isFlinging()) {
             pdfView.performPageSnap();
         }

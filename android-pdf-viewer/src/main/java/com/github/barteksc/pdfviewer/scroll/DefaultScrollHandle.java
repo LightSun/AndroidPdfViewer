@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
-import android.support.v4.content.ContextCompat;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
@@ -50,6 +49,9 @@ public class DefaultScrollHandle extends RelativeLayout implements ScrollHandle 
         setTextColor(Color.BLACK);
         setTextSize(DEFAULT_TEXT_SIZE);
     }
+    private Drawable getDrawable(int id){
+        return context.getResources().getDrawable(id);
+    }
 
     @Override
     public void setupLayout(PDFView pdfView) {
@@ -61,20 +63,20 @@ public class DefaultScrollHandle extends RelativeLayout implements ScrollHandle 
             height = HANDLE_SHORT;
             if (inverted) { // left
                 align = ALIGN_PARENT_LEFT;
-                background = ContextCompat.getDrawable(context, R.drawable.default_scroll_handle_left);
+                background = getDrawable(R.drawable.default_scroll_handle_left);
             } else { // right
                 align = ALIGN_PARENT_RIGHT;
-                background = ContextCompat.getDrawable(context, R.drawable.default_scroll_handle_right);
+                background = getDrawable(R.drawable.default_scroll_handle_right);
             }
         } else {
             width = HANDLE_SHORT;
             height = HANDLE_LONG;
             if (inverted) { // top
                 align = ALIGN_PARENT_TOP;
-                background = ContextCompat.getDrawable(context, R.drawable.default_scroll_handle_top);
+                background = getDrawable(R.drawable.default_scroll_handle_top);
             } else { // bottom
                 align = ALIGN_PARENT_BOTTOM;
-                background = ContextCompat.getDrawable(context, R.drawable.default_scroll_handle_bottom);
+                background = getDrawable(R.drawable.default_scroll_handle_bottom);
             }
         }
 

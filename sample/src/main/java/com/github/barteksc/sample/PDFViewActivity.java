@@ -116,7 +116,7 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
         }
         setTitle(pdfFileName);
 
-        SimpleTouchListener.attach(pdfView, mIv_iv);
+       // SimpleTouchListener.attach(pdfView, mIv_iv);
     }
 
     private void displayFromAsset(String assetFileName) {
