@@ -16,6 +16,7 @@
 package com.github.barteksc.pdfviewer;
 
 import android.graphics.Bitmap;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.SparseBooleanArray;
@@ -31,7 +32,7 @@ import com.shockwave.pdfium.util.SizeF;
 import java.util.ArrayList;
 import java.util.List;
 
-class PdfFile {
+public class PdfFile {
 
     private static final Object lock = new Object();
     private PdfDocument pdfDocument;
@@ -319,6 +320,46 @@ class PdfFile {
                                  RectF rect) {
         int docPage = documentPage(pageIndex);
         return pdfiumCore.mapRectToDevice(pdfDocument, docPage, startX, startY, sizeX, sizeY, 0, rect);
+    }
+    /**
+     * Convert the screen coordinates of a point to page coordinates.
+     *
+     * The page coordinate system has its origin at the left-bottom corner
+     * of the page, with the X-axis on the bottom going to the right, and
+     * the Y-axis on the left side going up.
+     *
+     * NOTE: this coordinate system can be altered when you zoom, scroll,
+     * or rotate a page, however, a point on the page should always have
+     * the same coordinate values in the page coordinate system.
+     *
+     * The device coordinate system is device dependent. For screen device,
+     * its origin is at the left-top corner of the window. However this
+     * origin can be altered by the Windows coordinate transformation
+     * utilities.
+     *
+     * You must make sure the start_x, start_y, size_x, size_y
+     * and rotate parameters have exactly same values as you used in
+     * the FPDF_RenderPage() function call.
+     *
+     * @param pageIndex index of page
+     * @param startX    Left pixel position of the display area in device coordinates.
+     * @param startY    Top pixel position of the display area in device coordinates.
+     * @param sizeX     Horizontal size (in pixels) for displaying the page.
+     * @param sizeY     Vertical size (in pixels) for displaying the page.
+     * @param rotate    Page orientation:
+     *                      0 (normal)
+     *                      1 (rotated 90 degrees clockwise)
+     *                      2 (rotated 180 degrees)
+     *                      3 (rotated 90 degrees counter-clockwise)
+     * @param deviceX   X value in device coordinates to be converted.
+     * @param deviceY   Y value in device coordinates to be converted.
+     * @return the page coordinates
+     */
+    public PointF mapDeviceCoordsToPage(int pageIndex, int startX, int startY, int sizeX,
+                                        int sizeY, int rotate, int deviceX, int deviceY) {
+        int docPage = documentPage(pageIndex);
+        return pdfiumCore.mapDeviceCoordsToPage(pdfDocument, docPage, startX, startY, sizeX, sizeY,
+                rotate, deviceX, deviceY);
     }
 
     public void dispose() {

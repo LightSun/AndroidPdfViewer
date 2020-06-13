@@ -27,6 +27,9 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.github.barteksc.pdfviewer.PDFView;
@@ -62,6 +65,9 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
 
     @ViewById
     PDFView pdfView;
+
+    @ViewById(R.id.iv)
+    ImageView mIv_iv;
 
     @NonConfigurationInstance
     Uri uri;
@@ -109,6 +115,8 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
             displayFromAsset(SAMPLE_FILE);
         }
         setTitle(pdfFileName);
+
+        SimpleTouchListener.attach(pdfView, mIv_iv);
     }
 
     private void displayFromAsset(String assetFileName) {
@@ -119,10 +127,14 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 .onPageChange(this)
                 .enableAnnotationRendering(true)
                 .onLoad(this)
-                .scrollHandle(new DefaultScrollHandle(this))
-                .spacing(10) // in dp
+                //.scrollHandle(new DefaultScrollHandle(this))
+                //.spacing(10) // in dp
                 .onPageError(this)
+                //.fitEachPage(true)
+                .autoSpacing(true)
                 .pageFitPolicy(FitPolicy.BOTH)
+                .pageFling(true)
+                .pageSnap(true)
                 .load();
     }
 

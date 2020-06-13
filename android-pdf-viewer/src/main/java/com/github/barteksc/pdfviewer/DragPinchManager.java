@@ -28,6 +28,8 @@ import com.github.barteksc.pdfviewer.util.SnapEdge;
 import com.shockwave.pdfium.PdfDocument;
 import com.shockwave.pdfium.util.SizeF;
 
+import java.util.Locale;
+
 import static com.github.barteksc.pdfviewer.util.Constants.Pinch.MAXIMUM_ZOOM;
 import static com.github.barteksc.pdfviewer.util.Constants.Pinch.MINIMUM_ZOOM;
 
@@ -189,9 +191,18 @@ class DragPinchManager implements GestureDetector.OnGestureListener, GestureDete
     private void onScrollEnd(MotionEvent event) {
         pdfView.loadPages();
         hideHandle();
+        log();
         if (!animationManager.isFlinging()) {
             pdfView.performPageSnap();
         }
+    }
+
+    private void log() {
+        PdfFile pdfFile = pdfView.getPdfFile();
+        String str = String.format(Locale.getDefault(), "page = %d,xOffset = %f, yOffset = %f, zoom = %f, \n w =%f, h = %f",
+                pdfView.getCurrentPage(), pdfView.getCurrentXOffset(), pdfView.getCurrentYOffset(),
+                pdfView.getZoom(), pdfFile.getMaxPageWidth(), pdfFile.getMaxPageHeight());
+        System.out.println("PdfView >>> " + str);
     }
 
     @Override

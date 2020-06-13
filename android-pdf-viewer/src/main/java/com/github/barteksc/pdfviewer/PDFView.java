@@ -280,6 +280,9 @@ public class PDFView extends RelativeLayout {
         decodingAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
+    public PdfFile getPdfFile() {
+        return pdfFile;
+    }
     /**
      * Go to the given page.
      *
