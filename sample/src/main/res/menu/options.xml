@@ -6,4 +6,10 @@
         android:icon="@drawable/ic_open_in_browser_grey_700_48dp"
         android:title="@string/pick_file"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/test_sticker"
+        android:icon="@drawable/lib_pick_ic_selected"
+        android:title="test_sticker"
+        app:showAsAction="always" />
 </menu>

@@ -38,6 +38,7 @@ import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
+import com.heaven7.android.util2.LauncherIntent;
 import com.shockwave.pdfium.PdfDocument;
 
 import org.androidannotations.annotations.AfterViews;
@@ -93,6 +94,13 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
         }
 
         launchPicker();
+    }
+    @OptionsItem(R.id.test_sticker)
+    void testSticker(){
+         new LauncherIntent.Builder()
+                 .setClass(this,TestStickerViewActivity.class)
+                 .build()
+                 .startActivity();
     }
 
     void launchPicker() {

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="StickerView">
+        <attr name="stv_sticker_width" format="dimension|reference"/>
+        <attr name="stv_sticker_height" format="dimension|reference"/>
+
+        <attr name="stv_line_color" format="color|reference"/>
+
+        <attr name="stv_pe_interval" format="float|reference"/>
+        <attr name="stv_pe_phase" format="float|reference"/>
+        <attr name="stv_dotRadius" format="dimension|reference"/>
+        <attr name="stv_dotColor" format="color|reference"/>
+
+        <attr name="stv_text_bg_round" format="dimension|reference"/>
+        <attr name="stv_text_bg_color" format="color|reference"/>
+
+        <attr name="stv_text_color" format="color|reference"/>
+        <attr name="stv_text_size" format="dimension|reference"/>
+        <attr name="stv_text_marginStart" format="dimension|reference"/>
+        <attr name="stv_text_padding_start" format="dimension|reference"/>
+        <attr name="stv_text_padding_top" format="dimension|reference"/>
+        <attr name="stv_text_padding_bottom" format="dimension|reference"/>
+        <attr name="stv_text_padding_end" format="dimension|reference"/>
+
+    </declare-styleable>
+</resources>

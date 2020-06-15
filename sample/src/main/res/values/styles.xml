@@ -1,4 +1,30 @@
 <resources>
 
+    <style name="Common_sticker_view">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:padding">8dp</item>
+
+        <item name="stv_sticker_width">140dp</item>
+        <item name="stv_sticker_height">72dp</item>
+        <item name="stv_line_color">#bfbfbf</item>
+
+        <item name="stv_pe_interval">5</item>
+        <item name="stv_pe_phase">1</item>
+        <item name="stv_dotRadius">5dp</item>
+        <item name="stv_dotColor">#2d8fff</item>
+
+        <item name="stv_text_bg_round">4dp</item>
+        <item name="stv_text_bg_color">#2d8fff</item>
+
+        <item name="stv_text_color">#ffffff</item>
+        <item name="stv_text_size">14sp</item>
+        <item name="stv_text_marginStart">10dp</item>
+        <item name="stv_text_padding_start">12dp</item>
+        <item name="stv_text_padding_end">12dp</item>
+        <item name="stv_text_padding_top">2dp</item>
+        <item name="stv_text_padding_bottom">2dp</item>
+
+    </style>
 
 </resources>
