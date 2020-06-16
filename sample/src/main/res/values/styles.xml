@@ -14,6 +14,7 @@
         <item name="stv_dotRadius">6dp</item>
         <item name="stv_dotColor">#2d8fff</item>
 
+        <item name="stv_text_enable">false</item>
         <item name="stv_text_bg_round">4dp</item>
         <item name="stv_text_bg_color">#2d8fff</item>
 
@@ -25,7 +26,8 @@
         <item name="stv_text_padding_top">2dp</item>
         <item name="stv_text_padding_bottom">2dp</item>
 
-        <item name="stv_proportional_zoom">true</item>
+        <item name="stv_content_margin_start">10dp</item>
+        <item name="stv_content_margin_top">-10dp</item>
 
     </style>
 
