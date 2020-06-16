@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -17,13 +18,22 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.heaven7.core.util.Logger;
+
 /**
  * the sticker view
  * . should match_parent, match_parent.
  */
 public class StickerView extends View {
 
+    private static final String TAG = "StickerView";
     private static final int GROWXY = 10;
+    //drag directions
+    private static final int DRAG_DIRECTION_LEFT_TOP     = 1;
+    private static final int DRAG_DIRECTION_LEFT_BOTTOM  = 2;
+    private static final int DRAG_DIRECTION_RIGHT_BOTTOM = 3;
+    private static final int DRAG_DIRECTION_RIGHT_TOP    = 4;
+
     private final Params mParams = new Params();
     private final Rect mRect = new Rect();
     private final RectF mRectF = new RectF();
@@ -37,9 +47,9 @@ public class StickerView extends View {
 
     private Bitmap mSticker;
     private OnClickTextListener mOnClickTextListener;
+    //content margin top and bottom
     private int mMarginStart;
     private int mMarginTop;
-
 
     public StickerView(Context context) {
         this(context, null);
@@ -67,6 +77,19 @@ public class StickerView extends View {
         this.mOnClickTextListener = onClickTextListener;
     }
 
+    public int getMarginStart() {
+        return mMarginStart;
+    }
+    public void setMarginStart(int mMarginStart) {
+        this.mMarginStart = mMarginStart;
+    }
+    public int getMarginTop() {
+        return mMarginTop;
+    }
+    public void setMarginTop(int mMarginTop) {
+        this.mMarginTop = mMarginTop;
+    }
+
     public void setSticker(int drawableId){
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), drawableId);
         if(bitmap == null){
@@ -76,15 +99,30 @@ public class StickerView extends View {
     }
     public void setSticker(Bitmap bitmap){
         mSticker = bitmap;
+        //zoom-eq. we need reset sticker width and height.
+        fitZoomEqual(false);
         invalidate();
     }
-
+    private void fitZoomEqual(boolean minOrMax){
+        if(mParams.proportionalZoom && mParams.stickerWidth > 0 && mParams.stickerHeight > 0){
+            float scaleX = mParams.stickerWidth * 1f / mSticker.getWidth();
+            float scaleY = mParams.stickerHeight * 1f / mSticker.getHeight();
+            float scale = minOrMax ? Math.min(scaleX, scaleY) : Math.max(scaleX, scaleY);
+            mParams.stickerWidth = (int) (mSticker.getWidth() * scale);
+            mParams.stickerHeight = (int) (mSticker.getHeight() * scale);
+        }
+    }
+    private void onTouchRelease() {
+        Logger.d(TAG, "onTouchRelease");
+    }
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if(mGestureDetector.onTouchEvent(event)){
-            return true;
+        boolean result = mGestureDetector.onTouchEvent(event);
+        if(event.getActionMasked() == MotionEvent.ACTION_UP
+                || event.getActionMasked() == MotionEvent.ACTION_CANCEL){
+            onTouchRelease();
         }
-        return super.onTouchEvent(event);
+        return result || super.onTouchEvent(event);
     }
 
     @Override
@@ -173,12 +211,61 @@ public class StickerView extends View {
                 mRectF.bottom + growY);
         return mRectF.contains(x, y);
     }
+    private int getDragDirection(MotionEvent e){
+        if(containsXY(0, 0, e)){
+            return DRAG_DIRECTION_LEFT_TOP;
+        }
+        final int stickerWidth = mParams.stickerWidth <=0 ? mSticker.getWidth() : mParams.stickerWidth;
+        final int stickerHeight = mParams.stickerHeight <=0 ? mSticker.getHeight() : mParams.stickerHeight;
+        if(containsXY(stickerWidth, 0, e)){
+            return DRAG_DIRECTION_RIGHT_TOP;
+        }
+        if(containsXY(stickerWidth, stickerHeight, e)){
+            return DRAG_DIRECTION_RIGHT_BOTTOM;
+        }
+        if(containsXY(0, stickerHeight, e)){
+            return DRAG_DIRECTION_LEFT_BOTTOM;
+        }
+        return -1;
+    }
+    private boolean containsXY(int expectX, int expectY, MotionEvent e){
+        mRectF.set(expectX - mParams.dotRadius,
+                expectY - mParams.dotRadius,
+                expectX + mParams.dotRadius,
+                expectY + mParams.dotRadius
+        );
+        return containsInRect(mRectF, e.getX(), e.getY(), GROWXY * 2, GROWXY * 2);
+    }
+
+    private void move(int dx, int dy){
+        mMarginStart += dx;
+        mMarginTop += dy;
+        invalidate();
+    }
 
     private class Gesture0 implements GestureDetector.OnGestureListener{
+        private int mDragDirection;
+        private int mTmpStickerWidth;
+        private int mTmpStickerHeight;
+
+        private int mTmpMarginTop;
+        private int mTmpMarginStart;
+
+        private void moveInternal(int dx, int dy){
+            mMarginStart = mTmpMarginStart + dx;
+            mMarginTop = mTmpMarginTop + dy;
+            invalidate();
+        }
 
         @Override
         public boolean onDown(MotionEvent e) {
-            //TODO
+            mDragDirection = getDragDirection(e);
+            if(mDragDirection > 0){
+                mTmpStickerWidth = mParams.stickerWidth > 0 ? mParams.stickerWidth : mSticker.getWidth();
+                mTmpStickerHeight = mParams.stickerHeight > 0 ? mParams.stickerHeight : mSticker.getHeight();
+            }
+            mTmpMarginStart = mMarginStart;
+            mTmpMarginTop = mMarginTop;
             return true;
         }
         @Override
@@ -197,15 +284,63 @@ public class StickerView extends View {
         }
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            int dx = (int) (e2.getX() - e1.getX());
+            int dy = (int) (e2.getY() - e1.getY());
+            switch (mDragDirection){
+                case DRAG_DIRECTION_LEFT_BOTTOM:{
+                    //w, h, mx
+                    mParams.stickerWidth = mTmpStickerWidth - dx;
+                    mParams.stickerHeight = mTmpStickerHeight + dy;
+                    fitZoomEqual(true);
+                    moveInternal(dx, 0);
+                }break;
 
-            return false;
+                case DRAG_DIRECTION_LEFT_TOP:{
+                    if(mParams.proportionalZoom){
+                        if(dx < dy){
+                            dx = dy;
+                        }else if(dy < dx ){
+                            dy = dx;
+                        }
+                    }
+                    //w, h. mx, my
+                    mParams.stickerWidth = mTmpStickerWidth - dx;
+                    mParams.stickerHeight = mTmpStickerHeight - dy;
+                    moveInternal(dx, dy);
+                }break;
+
+                case DRAG_DIRECTION_RIGHT_BOTTOM:{
+                    if(mParams.proportionalZoom){
+                        if(dx < dy){
+                            dx = dy;
+                        }else if(dy < dx ){
+                            dy = dx;
+                        }
+                    }
+                    //w,h
+                    mParams.stickerWidth = mTmpStickerWidth + dx;
+                    mParams.stickerHeight = mTmpStickerHeight + dy;
+                    invalidate();
+                }break;
+
+                case DRAG_DIRECTION_RIGHT_TOP:{
+                    //w, h, my
+                    mParams.stickerWidth = mTmpStickerWidth + dx;
+                    mParams.stickerHeight = mTmpStickerHeight - dy;
+                    fitZoomEqual(true);
+                    moveInternal(0, dy);
+                }break;
+
+                default:
+                    //not drag
+                    moveInternal(dx, dy);
+            }
+            return true;
         }
-
         @Override
         public void onLongPress(MotionEvent e) {
 
         }
-
         @Override
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             return false;
@@ -233,6 +368,7 @@ public class StickerView extends View {
         int textPaddingEnd;
         int textPaddingBottom;
         String text = "旋转";
+        boolean proportionalZoom;
 
         public void init(TypedArray ta){
             stickerWidth = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_sticker_width, 0);
@@ -256,9 +392,12 @@ public class StickerView extends View {
             textPaddingTop = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_text_padding_top, 0);
             textPaddingEnd = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_text_padding_end, 0);
             textPaddingBottom = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_text_padding_bottom, 0);
+            proportionalZoom = ta.getBoolean(R.styleable.StickerView_stv_proportional_zoom, true);
         }
     }
+
     public interface OnClickTextListener{
         void onClickTextArea(StickerView view);
     }
+
 }

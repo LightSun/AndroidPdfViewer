@@ -21,6 +21,7 @@
         <attr name="stv_text_padding_top" format="dimension|reference"/>
         <attr name="stv_text_padding_bottom" format="dimension|reference"/>
         <attr name="stv_text_padding_end" format="dimension|reference"/>
-
+        <!-- 是否等比缩放 -->
+        <attr name="stv_proportional_zoom" format="boolean|reference"/>
     </declare-styleable>
 </resources>

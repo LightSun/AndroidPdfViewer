@@ -11,7 +11,7 @@
 
         <item name="stv_pe_interval">5</item>
         <item name="stv_pe_phase">1</item>
-        <item name="stv_dotRadius">5dp</item>
+        <item name="stv_dotRadius">6dp</item>
         <item name="stv_dotColor">#2d8fff</item>
 
         <item name="stv_text_bg_round">4dp</item>
@@ -24,6 +24,8 @@
         <item name="stv_text_padding_end">12dp</item>
         <item name="stv_text_padding_top">2dp</item>
         <item name="stv_text_padding_bottom">2dp</item>
+
+        <item name="stv_proportional_zoom">true</item>
 
     </style>
 
