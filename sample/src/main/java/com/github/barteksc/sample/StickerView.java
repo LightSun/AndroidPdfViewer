@@ -649,6 +649,9 @@ public class StickerView extends View {
         }
     }
 
+    /**
+     * the click listener for sticker-view
+      */
     public interface OnClickListener{
         /**
          * called on click text area
@@ -662,6 +665,10 @@ public class StickerView extends View {
          */
         void onClickSticker(StickerView view);
     }
+
+    /**
+     * the decoration
+     */
     public abstract static class Decoration{
         /**
          * called on draw
