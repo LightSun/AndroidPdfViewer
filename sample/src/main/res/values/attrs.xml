@@ -35,5 +35,8 @@
         <!-- min scale -->
         <attr name="stv_min_scale" format="float|reference"/>
         <attr name="stv_max_scale" format="float|reference"/>
+        <!-- touch padding as slop -->
+        <attr name="stv_touch_padding" format="dimension|reference"/>
     </declare-styleable>
+
 </resources>

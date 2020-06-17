@@ -21,14 +21,17 @@ import android.view.ViewTreeObserver;
 
 import com.heaven7.core.util.Logger;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * the sticker view
- * . should match_parent, match_parent.
+ *  .width and height should be match_parent, match_parent.
+ * @author heaven7
  */
 public class StickerView extends View {
 
     private static final String TAG = "StickerView";
-    private static final int GROWXY = 10;
     //drag directions
     private static final int DRAG_DIRECTION_LEFT_TOP     = 1;
     private static final int DRAG_DIRECTION_LEFT_BOTTOM  = 2;
@@ -47,8 +50,9 @@ public class StickerView extends View {
 
     private PathEffect mEffect;
     private Bitmap mSticker;
-    private OnClickTextListener mOnClickTextListener;
+    private OnClickListener mOnClickListener;
 
+    private List<Decoration> mDecorations;
 
     public StickerView(Context context) {
         this(context, null);
@@ -72,6 +76,9 @@ public class StickerView extends View {
         reset();
     }
 
+    /**
+     * after you change some params from {@linkplain #getParams()}. you may should call this.
+     */
     public void reset(){
         mEffect = new DashPathEffect(new float[]{mParams.linePathInterval, mParams.linePathInterval}, mParams.linePathPhase);
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -84,25 +91,71 @@ public class StickerView extends View {
         });
     }
 
-    public void setOnClickTextListener(OnClickTextListener onClickTextListener) {
-        this.mOnClickTextListener = onClickTextListener;
+    /**
+     * set on click listener
+     * @param l the listener
+     */
+    public void setOnClickListener(OnClickListener l) {
+        this.mOnClickListener = l;
     }
-
+    /**
+     * add decoration
+     * @param decoration the decoration
+     */
+    public void addDecoration(Decoration decoration){
+        if(mDecorations == null){
+            mDecorations = new ArrayList<>(5);
+        }
+        mDecorations.add(decoration);
+    }
+    /**
+     * get the params
+     * @return the params
+     */
+    public Params getParams(){
+        return mParams;
+    }
+    /**
+     * get the margin start
+     * @return the margin start
+     */
     public int getMarginStart() {
         return mParams.marginStart;
     }
+    /**
+     * set margin start
+     * @param mMarginStart the margin start.
+     */
     public void setMarginStart(int mMarginStart) {
         mParams.marginStart = mMarginStart;
         invalidate();
     }
+    /**
+     * get margin top
+     * @return the margin top
+     */
     public int getMarginTop() {
         return mParams.marginTop;
     }
+    /**
+     * set margin top for content
+     * @param mMarginTop the margin top
+     */
     public void setMarginTop(int mMarginTop) {
         mParams.marginTop = mMarginTop;
         invalidate();
     }
-
+    /**
+     * get the sticker
+     * @return the sticker
+     */
+    public Bitmap getSticker(){
+        return mSticker;
+    }
+    /**
+     * set sticker by drawable id
+     * @param drawableId the drawable id
+     */
     public void setSticker(int drawableId){
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), drawableId);
         if(bitmap == null){
@@ -110,6 +163,10 @@ public class StickerView extends View {
         }
         setSticker(bitmap);
     }
+    /**
+     * set sticker bitmap
+     * @param bitmap the sticker
+     */
     public void setSticker(Bitmap bitmap){
         mSticker = bitmap;
         mParams.setStickerWidthHeight(bitmap);
@@ -117,18 +174,39 @@ public class StickerView extends View {
         fitZoomEqual(false);
         invalidate();
     }
-    private void fitZoomEqual(boolean minOrMax){
-        if(mParams.proportionalZoom && mParams.stickerWidth > 0 && mParams.stickerHeight > 0){
-            float scaleX = mParams.stickerWidth * 1f / mSticker.getWidth();
-            float scaleY = mParams.stickerHeight * 1f / mSticker.getHeight();
-            float scale = minOrMax ? Math.min(scaleX, scaleY) : Math.max(scaleX, scaleY);
-            mParams.stickerWidth = (int) (mSticker.getWidth() * scale);
-            mParams.stickerHeight = (int) (mSticker.getHeight() * scale);
-        }
+    //-------------------------------------------------------------
+
+    /**
+     * get the sticker width . this should call after {@linkplain #setSticker(Bitmap)}.
+     * @return the sticker width
+     */
+    public int getStickerWidth(){
+        return mParams.stickerWidth <=0 ? mSticker.getWidth() : mParams.stickerWidth;
     }
-    private void onTouchRelease() {
-        Logger.d(TAG, "onTouchRelease");
+    /**
+     * get the sticker height . this should call after {@linkplain #setSticker(Bitmap)}.
+     * @return the sticker height
+     */
+    public int getStickerHeight(){
+        return mParams.stickerHeight <=0 ? mSticker.getHeight() : mParams.stickerHeight;
     }
+
+    /**
+     * get the scale x for sticker
+     * @return the sticker scale x
+     */
+    public float getStickerScaleX(){
+        return mParams.stickerWidth * 1f / mParams.rawStickerWidth;
+    }
+    /**
+     * get the scale y for sticker
+     * @return the sticker scale y
+     */
+    public float getStickerScaleY(){
+        return mParams.stickerHeight * 1f / mParams.rawStickerHeight;
+    }
+    //-------------------------------------------------------------
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         boolean result = mGestureDetector.onTouchEvent(event);
@@ -138,7 +216,6 @@ public class StickerView extends View {
         }
         return result || super.onTouchEvent(event);
     }
-
     @Override
     protected void onDraw(Canvas canvas) {
         if(mSticker == null){
@@ -148,8 +225,8 @@ public class StickerView extends View {
         int paddingTop = getPaddingTop();
         //int paddingEnd = getPaddingEnd();
         //int paddingBottom = getPaddingBottom();
-        final int stickerWidth = mParams.stickerWidth <=0 ? mSticker.getWidth() : mParams.stickerWidth;
-        final int stickerHeight = mParams.stickerHeight <=0 ? mSticker.getHeight() : mParams.stickerHeight;
+        final int stickerWidth = getStickerWidth();
+        final int stickerHeight = getStickerHeight();
 
         canvas.save();
         canvas.translate(paddingStart + mParams.marginStart, paddingTop + mParams.marginTop);
@@ -176,7 +253,7 @@ public class StickerView extends View {
         canvas.drawCircle(stickerWidth, stickerHeight, mParams.dotRadius, mLinePaint);
         canvas.drawCircle(0, stickerHeight, mParams.dotRadius, mLinePaint);
         //---------- texts' --------------
-        if(mParams.textEnabled){
+        if(mParams.textEnabled && mParams.text != null){
             //text prepare
             measureText0();
             final int textWidth = mRect.width();
@@ -202,8 +279,25 @@ public class StickerView extends View {
             DrawingUtils.computeTextDrawingCoordinate(mParams.text, mTextPaint, mRect, mRectF);
             canvas.drawText(mParams.text, mRectF.left, mRectF.top - mTextPaint.ascent(), mTextPaint);
         }
-
+        if(mDecorations != null){
+            for (Decoration decoration :mDecorations){
+                decoration.onDraw(this, stickerWidth, stickerHeight);
+            }
+        }
         canvas.restore();
+    }
+
+    private void fitZoomEqual(boolean minOrMax){
+        if(mParams.proportionalZoom && mParams.stickerWidth > 0 && mParams.stickerHeight > 0){
+            float scaleX = mParams.stickerWidth * 1f / mSticker.getWidth();
+            float scaleY = mParams.stickerHeight * 1f / mSticker.getHeight();
+            float scale = minOrMax ? Math.min(scaleX, scaleY) : Math.max(scaleX, scaleY);
+            mParams.stickerWidth = (int) (mSticker.getWidth() * scale);
+            mParams.stickerHeight = (int) (mSticker.getHeight() * scale);
+        }
+    }
+    protected void onTouchRelease() {
+        Logger.d(TAG, "onTouchRelease");
     }
 
     /**
@@ -212,25 +306,24 @@ public class StickerView extends View {
      * @param target                  the target rect
      * @param x                       the x position
      * @param y                       the y position
-     * @param growX                   the growX area with left and right.
-     * @param growY                   the growY area with top and bottom.
+     * @param touchPadding            the touch padding as slop
      * @return true if contains in rect.
      */
-    private boolean containsInRect(RectF target, float x, float y, int growX, int growY) {
+    private boolean containsInRect(RectF target, float x, float y, int touchPadding) {
         mRectF.set(target);
         mRectF.offset(getPaddingStart() + mParams.marginStart, getPaddingTop() + mParams.marginTop);
-        mRectF.set(mRectF.left - growX,
-                mRectF.top - growY,
-                mRectF.right + growX,
-                mRectF.bottom + growY);
+        mRectF.set(mRectF.left - touchPadding,
+                mRectF.top - touchPadding,
+                mRectF.right + touchPadding,
+                mRectF.bottom + touchPadding);
         return mRectF.contains(x, y);
     }
     private int getDragDirection(MotionEvent e){
         if(containsXY(0, 0, e)){
             return DRAG_DIRECTION_LEFT_TOP;
         }
-        final int stickerWidth = mParams.stickerWidth <=0 ? mSticker.getWidth() : mParams.stickerWidth;
-        final int stickerHeight = mParams.stickerHeight <=0 ? mSticker.getHeight() : mParams.stickerHeight;
+        final int stickerWidth = getStickerWidth();
+        final int stickerHeight = getStickerHeight();
         if(containsXY(stickerWidth, 0, e)){
             return DRAG_DIRECTION_RIGHT_TOP;
         }
@@ -248,7 +341,7 @@ public class StickerView extends View {
                 expectX + mParams.dotRadius,
                 expectY + mParams.dotRadius
         );
-        return containsInRect(mRectF, e.getX(), e.getY(), GROWXY * 2, GROWXY * 2);
+        return containsInRect(mRectF, e.getX(), e.getY(), mParams.touchPadding * 2);
     }
     private void measureText0(){
         mTextPaint.setStyle(Paint.Style.STROKE);
@@ -256,7 +349,7 @@ public class StickerView extends View {
         mTextPaint.getTextBounds(mParams.text, 0, mParams.text.length(), mRect);
     }
     private int getContentWidth(){
-        final int stickerWidth = mParams.stickerWidth <=0 ? mSticker.getWidth() : mParams.stickerWidth;
+        final int stickerWidth = getStickerWidth();
         if(!mParams.textEnabled){
             return stickerWidth;
         }
@@ -264,16 +357,14 @@ public class StickerView extends View {
         final int textWidth = mRect.width();
         return stickerWidth + mParams.textMarginStart + textWidth + mParams.textPaddingStart + mParams.textPaddingEnd;
     }
-    private int getContentHeight(){
-        return  mParams.stickerHeight <=0 ? mSticker.getHeight() : mParams.stickerHeight;
-    }
     private void adjustMargin(){
+        //getStickerHeight as content height
         if(mParams.marginStart < 0){
             mParams.marginStart = getWidth() - getContentWidth() - getPaddingStart()
                     - getPaddingEnd() - Math.abs(mParams.marginStart);
         }
         if(mParams.marginTop < 0){
-            mParams.marginTop = getHeight() - getContentHeight() - getPaddingTop()
+            mParams.marginTop = getHeight() - getStickerHeight() - getPaddingTop()
                     - getPaddingBottom() - Math.abs(mParams.marginTop);
         }
     }
@@ -296,6 +387,7 @@ public class StickerView extends View {
 
         private int mTmpMarginTop;
         private int mTmpMarginStart;
+        private Decoration mTouchDecoration;
 
         private void moveInternal(int dx, int dy){
             mParams.marginStart = mTmpMarginStart + dx;
@@ -305,10 +397,32 @@ public class StickerView extends View {
 
         @Override
         public boolean onDown(MotionEvent e) {
+            mTouchDecoration = null;
             mDragDirection = getDragDirection(e);
             if(mDragDirection > 0){
                 mTmpStickerWidth = mParams.stickerWidth > 0 ? mParams.stickerWidth : mSticker.getWidth();
                 mTmpStickerHeight = mParams.stickerHeight > 0 ? mParams.stickerHeight : mSticker.getHeight();
+            }else {
+                mRectF.set(0, 0, getContentWidth(), getStickerHeight());
+                boolean shouldHandle = false;
+                //may be drag . so need * 2
+                if(containsInRect(mRectF, e.getX(), e.getY(), mParams.touchPadding * 2)){
+                    shouldHandle = true;
+                }else if(mDecorations != null){
+                    for (Decoration decor: mDecorations){
+                        decor.getRangeRect(mRect);
+                        mRectF.set(mRect);
+                        if(containsInRect(mRectF, e.getX(), e.getY(), mParams.touchPadding)){
+                            mTouchDecoration = decor;
+                            shouldHandle = true;
+                            break;
+                        }
+                    }
+                }
+                //out of range .ignore
+                if(!shouldHandle){
+                    return false;
+                }
             }
             mTmpMarginStart = mParams.marginStart;
             mTmpMarginTop = mParams.marginTop;
@@ -320,10 +434,21 @@ public class StickerView extends View {
         }
         @Override
         public boolean onSingleTapUp(MotionEvent e) {
-            if(mParams.textEnabled && containsInRect(mTextArea, e.getX(), e.getY(), GROWXY, GROWXY)){
-                if(mOnClickTextListener != null){
-                    mOnClickTextListener.onClickTextArea(StickerView.this);
+            mRectF.set(0, 0, getStickerWidth(), getStickerHeight());
+            if(containsInRect(mRectF, e.getX(), e.getY(), mParams.touchPadding)){
+                if(mOnClickListener != null){
+                    mOnClickListener.onClickSticker(StickerView.this);
+                    return true;
                 }
+            }
+            if(mParams.textEnabled && containsInRect(mTextArea, e.getX(), e.getY(), mParams.touchPadding)){
+                if(mOnClickListener != null){
+                    mOnClickListener.onClickTextArea(StickerView.this);
+                    return true;
+                }
+            }
+            if(mTouchDecoration != null){
+                mTouchDecoration.onClick(StickerView.this);
                 return true;
             }
             return false;
@@ -364,7 +489,7 @@ public class StickerView extends View {
                     mParams.stickerWidth = mTmpStickerWidth - dx;
                     mParams.stickerHeight = mTmpStickerHeight - dy;
                     fitZoomEqual(false);
-                    //check min scale
+                    //check scale bounds
                     if(reachScaleBound()){
                         mParams.stickerWidth = oldWidth;
                         mParams.stickerHeight = oldHeight;
@@ -387,7 +512,7 @@ public class StickerView extends View {
                     mParams.stickerWidth = mTmpStickerWidth + dx;
                     mParams.stickerHeight = mTmpStickerHeight + dy;
                     fitZoomEqual(false);
-                    //check min scale
+                    //check scale bounds
                     if(reachScaleBound()){
                         mParams.stickerWidth = oldWidth;
                         mParams.stickerHeight = oldHeight;
@@ -437,7 +562,7 @@ public class StickerView extends View {
         int stickerWidth;
         int stickerHeight;
         float stickerScaleRatio;
-        //path effect
+        //line
         int lineColor;
         float linePathInterval;
         float linePathPhase;
@@ -445,25 +570,27 @@ public class StickerView extends View {
         float dotRadius;
         int dotColor;
         //text area
-        int textBgColor;
-        int textBgRoundSize;
-        int textColor;
-        float textSize;
-        int textMarginStart;
-        int textPaddingStart;
-        int textPaddingTop;
-        int textPaddingEnd;
-        int textPaddingBottom;
-        String text;
-        boolean textEnabled;
+        public int textBgColor;
+        public int textBgRoundSize;
+        public int textColor;
+        public float textSize;
+        public int textMarginStart;
+        public int textPaddingStart;
+        public int textPaddingTop;
+        public int textPaddingEnd;
+        public int textPaddingBottom;
+        public String text;
+        public boolean textEnabled;
 
-        boolean proportionalZoom;
+        boolean proportionalZoom; //zoom -equal or not
 
         //content margin top and bottom
-        int marginStart = 0;
-        int marginTop = 0 ;
+        public int marginStart = 0;
+        public int marginTop = 0 ;
         float minScale = 0.5f;
         float maxScale = 1000000;
+
+        int touchPadding;
 
         private Params() { }
 
@@ -498,6 +625,8 @@ public class StickerView extends View {
             marginTop = ta.getDimensionPixelSize(R.styleable.StickerView_stv_content_margin_top, 0);
             minScale = ta.getFloat(R.styleable.StickerView_stv_min_scale, minScale);
             maxScale = ta.getFloat(R.styleable.StickerView_stv_max_scale, maxScale);
+
+            touchPadding = ta.getDimensionPixelSize(R.styleable.StickerView_stv_touch_padding, 10);
         }
         void setStickerWidth0(int width){
             rawStickerWidth = stickerWidth = width;
@@ -520,8 +649,38 @@ public class StickerView extends View {
         }
     }
 
-    public interface OnClickTextListener{
+    public interface OnClickListener{
+        /**
+         * called on click text area
+         * @param view the view
+         */
         void onClickTextArea(StickerView view);
-    }
 
+        /**
+         * called on click sticker
+         * @param view the sticker view
+         */
+        void onClickSticker(StickerView view);
+    }
+    public abstract static class Decoration{
+        /**
+         * called on draw
+         * @param view the sticker view
+         * @param stickerWidth the sticker width
+         * @param stickerHeight the sticker height
+         */
+        public abstract void onDraw(StickerView view,int stickerWidth, int stickerHeight);
+
+        /**
+         * get range rect. which used for check motion event.
+         * @param rect the out range rect
+         */
+        public abstract void getRangeRect(Rect rect);
+
+        /**
+         * called on click this decoration
+         * @param view the sticker view
+         */
+        public abstract void onClick(StickerView view);
+    }
 }

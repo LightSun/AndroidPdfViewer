@@ -19,10 +19,14 @@ public class TestStickerViewActivity extends AppCompatActivity {
         mStickerView = findViewById(R.id.sticker_view);
 
         mStickerView.setSticker(R.drawable.ic_launcher);
-        mStickerView.setOnClickTextListener(new StickerView.OnClickTextListener() {
+        mStickerView.setOnClickListener(new StickerView.OnClickListener() {
             @Override
             public void onClickTextArea(StickerView view) {
                 Toaster.show(view.getContext(), "Text is clicked.");
+            }
+            @Override
+            public void onClickSticker(StickerView view) {
+                Toaster.show(view.getContext(), "Sticker is clicked.");
             }
         });
     }
