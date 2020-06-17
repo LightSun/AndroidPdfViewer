@@ -29,7 +29,7 @@
 
         <item name="stv_content_margin_start">10dp</item>
         <item name="stv_content_margin_top">-10dp</item>
-        <item name="stv_proportional_zoom">false</item>
+        <item name="stv_proportional_zoom">true</item>
 
     </style>
 

@@ -22,7 +22,7 @@ public class TestStickerViewActivity extends AppCompatActivity {
         mStickerView.setOnClickListener(new StickerView.OnClickListener() {
             @Override
             public void onClickTextArea(StickerView view) {
-                Toaster.show(view.getContext(), "Text is clicked.");
+                view.rotateSticker(90);
             }
             @Override
             public void onClickSticker(StickerView view) {

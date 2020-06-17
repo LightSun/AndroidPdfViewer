@@ -53,6 +53,7 @@ public class StickerView extends View {
     private OnClickListener mOnClickListener;
 
     private List<Decoration> mDecorations;
+    private float mRotateDegree; //in clockwise
 
     public StickerView(Context context) {
         this(context, null);
@@ -168,11 +169,31 @@ public class StickerView extends View {
      * @param bitmap the sticker
      */
     public void setSticker(Bitmap bitmap){
-        mSticker = bitmap;
-        mParams.setStickerWidthHeight(bitmap);
-        //zoom-eq. we need reset sticker width and height.
-        fitZoomEqual(false);
+        setStickerInternal(bitmap);
+        mRotateDegree = 0;
         invalidate();
+    }
+
+    /**
+     * rotate 90 degree for the sticker as clockwise.
+     * @param degree the rotate degree.
+     * @throws UnsupportedOperationException if degree is not times of 90.
+     */
+    public void rotateSticker(float degree){
+        if(degree % 90 != 0){
+            throw new UnsupportedOperationException("currently only support rotate 90 degree.");
+        }
+        if(mSticker != null){
+            rotateStickerInternal(degree);
+            invalidate();
+        }
+    }
+    /**
+     * get the sticker rotate
+     * @return the sticker rotate
+     */
+    public float getStickerRotate(){
+        return mRotateDegree;
     }
     //-------------------------------------------------------------
 
@@ -379,7 +400,19 @@ public class StickerView extends View {
         }
         return false;
     }
-
+    private void setStickerInternal(Bitmap bitmap){
+        mSticker = bitmap;
+        mParams.setStickerWidthHeight(bitmap);
+        //zoom-eq. we need reset sticker width and height.
+        fitZoomEqual(false);
+    }
+    //TODO currently, only support 90*n
+    private void rotateStickerInternal(float degree){
+        degree = degree % 360;
+        mRotateDegree += degree;
+        mParams.swapStickerWidthHeight();
+        setStickerInternal(Utils.rotate(mSticker, degree));
+    }
     private class Gesture0 implements GestureDetector.OnGestureListener{
         private int mDragDirection;
         private int mTmpStickerWidth;
@@ -646,6 +679,15 @@ public class StickerView extends View {
                     setStickerHeight0(sticker.getHeight());
                 }
             }
+        }
+        public void swapStickerWidthHeight(){
+            int rw = rawStickerWidth;
+            rawStickerWidth = rawStickerHeight;
+            rawStickerHeight = rw;
+
+            int w = stickerWidth;
+            stickerWidth = stickerHeight;
+            stickerHeight = w;
         }
     }
 
