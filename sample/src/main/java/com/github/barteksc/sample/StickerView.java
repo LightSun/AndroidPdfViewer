@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
+import android.graphics.PathEffect;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
@@ -37,7 +38,6 @@ public class StickerView extends View {
     private final Params mParams = new Params();
     private final Rect mRect = new Rect();
     private final RectF mRectF = new RectF();
-    private final DashPathEffect mEffect;
 
     private final Paint mLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -45,6 +45,7 @@ public class StickerView extends View {
 
     private final GestureDetectorCompat mGestureDetector;
 
+    private PathEffect mEffect;
     private Bitmap mSticker;
     private OnClickTextListener mOnClickTextListener;
 
@@ -66,9 +67,13 @@ public class StickerView extends View {
         }finally {
             ta.recycle();
         }
-        mEffect = new DashPathEffect(new float[]{mParams.pe_interval, mParams.pe_interval}, mParams.pe_phase);
-
         mGestureDetector = new GestureDetectorCompat(context, new Gesture0());
+
+        reset();
+    }
+
+    public void reset(){
+        mEffect = new DashPathEffect(new float[]{mParams.linePathInterval, mParams.linePathInterval}, mParams.linePathPhase);
         getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
@@ -107,6 +112,7 @@ public class StickerView extends View {
     }
     public void setSticker(Bitmap bitmap){
         mSticker = bitmap;
+        mParams.setStickerWidthHeight(bitmap);
         //zoom-eq. we need reset sticker width and height.
         fitZoomEqual(false);
         invalidate();
@@ -259,8 +265,7 @@ public class StickerView extends View {
         return stickerWidth + mParams.textMarginStart + textWidth + mParams.textPaddingStart + mParams.textPaddingEnd;
     }
     private int getContentHeight(){
-        final int stickerHeight = mParams.stickerHeight <=0 ? mSticker.getHeight() : mParams.stickerHeight;
-        return stickerHeight;
+        return  mParams.stickerHeight <=0 ? mSticker.getHeight() : mParams.stickerHeight;
     }
     private void adjustMargin(){
         if(mParams.marginStart < 0){
@@ -271,6 +276,17 @@ public class StickerView extends View {
             mParams.marginTop = getHeight() - getContentHeight() - getPaddingTop()
                     - getPaddingBottom() - Math.abs(mParams.marginTop);
         }
+    }
+    private boolean reachScaleBound(){
+        float sw = mParams.stickerWidth * 1f / mParams.rawStickerWidth;
+        float sh = mParams.stickerHeight * 1f / mParams.rawStickerHeight;
+        if(sw < mParams.minScale || sh < mParams.minScale){
+            return true;
+        }
+        if(sw > mParams.maxScale || sh > mParams.maxScale){
+            return true;
+        }
+        return false;
     }
 
     private class Gesture0 implements GestureDetector.OnGestureListener{
@@ -316,48 +332,86 @@ public class StickerView extends View {
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             int dx = (int) (e2.getX() - e1.getX());
             int dy = (int) (e2.getY() - e1.getY());
+            final int oldWidth = mParams.stickerWidth;
+            final int oldHeight = mParams.stickerHeight;
+
             switch (mDragDirection){
                 case DRAG_DIRECTION_LEFT_BOTTOM:{
-                    //w, h, mx
+                    int oldRight = mParams.marginStart + getPaddingStart() + mParams.stickerWidth;
+                    //w, h, mx ---  fix- right-top
                     mParams.stickerWidth = mTmpStickerWidth - dx;
                     mParams.stickerHeight = mTmpStickerHeight + dy;
+                    //for better performance
                     fitZoomEqual(true);
+                    //check scale bounds
+                    if(reachScaleBound()){
+                        mParams.stickerWidth = oldWidth;
+                        mParams.stickerHeight = oldHeight;
+                        return true;
+                    }
+
+                    int newRight = mTmpMarginStart + dx + getPaddingStart() + mParams.stickerWidth;
+                    if(newRight != oldRight){
+                        dx -= newRight - oldRight;
+                    }
                     moveInternal(dx, 0);
                 }break;
 
                 case DRAG_DIRECTION_LEFT_TOP:{
-                    if(mParams.proportionalZoom){
-                        if(dx < dy){
-                            dx = dy;
-                        }else if(dy < dx ){
-                            dy = dx;
-                        }
-                    }
-                    //w, h. mx, my
+                    int oldRight = mParams.marginStart + getPaddingStart() + mParams.stickerWidth;
+                    int oldBottom = mParams.marginTop + getPaddingTop() + mParams.stickerHeight;
+                    //w, h. mx, my ------ fix=right-bottom
                     mParams.stickerWidth = mTmpStickerWidth - dx;
                     mParams.stickerHeight = mTmpStickerHeight - dy;
+                    fitZoomEqual(false);
+                    //check min scale
+                    if(reachScaleBound()){
+                        mParams.stickerWidth = oldWidth;
+                        mParams.stickerHeight = oldHeight;
+                        return true;
+                    }
+
+                    int newRight = mTmpMarginStart + dx + getPaddingStart() + mParams.stickerWidth;
+                    int newBottom = mTmpMarginTop + dy + getPaddingTop() + mParams.stickerHeight;
+                    if(newRight != oldRight){
+                        dx -= newRight - oldRight;
+                    }
+                    if(newBottom != oldBottom){
+                        dy -= newBottom - oldBottom;
+                    }
                     moveInternal(dx, dy);
                 }break;
 
                 case DRAG_DIRECTION_RIGHT_BOTTOM:{
-                    if(mParams.proportionalZoom){
-                        if(dx < dy){
-                            dx = dy;
-                        }else if(dy < dx ){
-                            dy = dx;
-                        }
-                    }
                     //w,h
                     mParams.stickerWidth = mTmpStickerWidth + dx;
                     mParams.stickerHeight = mTmpStickerHeight + dy;
+                    fitZoomEqual(false);
+                    //check min scale
+                    if(reachScaleBound()){
+                        mParams.stickerWidth = oldWidth;
+                        mParams.stickerHeight = oldHeight;
+                        return true;
+                    }
                     invalidate();
                 }break;
 
                 case DRAG_DIRECTION_RIGHT_TOP:{
-                    //w, h, my
+                    int oldBottom = mParams.marginTop + getPaddingTop() + mParams.stickerHeight;
+                    //w, h, my ---- fix= left-bottom
                     mParams.stickerWidth = mTmpStickerWidth + dx;
                     mParams.stickerHeight = mTmpStickerHeight - dy;
                     fitZoomEqual(true);
+                    //check scale bounds
+                    if(reachScaleBound()){
+                        mParams.stickerWidth = oldWidth;
+                        mParams.stickerHeight = oldHeight;
+                        return true;
+                    }
+                    int newBottom = mTmpMarginTop + dy + getPaddingTop() + mParams.stickerHeight;
+                    if(newBottom != oldBottom){
+                        dy -= newBottom - oldBottom;
+                    }
                     moveInternal(0, dy);
                 }break;
 
@@ -378,12 +432,15 @@ public class StickerView extends View {
     }
 
     public static class Params{
+        int rawStickerWidth;
+        int rawStickerHeight;
         int stickerWidth;
         int stickerHeight;
+        float stickerScaleRatio;
         //path effect
         int lineColor;
-        float pe_interval;
-        float pe_phase;
+        float linePathInterval;
+        float linePathPhase;
         //dot
         float dotRadius;
         int dotColor;
@@ -397,26 +454,32 @@ public class StickerView extends View {
         int textPaddingTop;
         int textPaddingEnd;
         int textPaddingBottom;
-        String text = "旋转";
+        String text;
         boolean textEnabled;
 
         boolean proportionalZoom;
 
         //content margin top and bottom
-        int marginStart = -1;
-        int marginTop = -1 ;
+        int marginStart = 0;
+        int marginTop = 0 ;
+        float minScale = 0.5f;
+        float maxScale = 1000000;
+
+        private Params() { }
 
         public void init(TypedArray ta){
-            stickerWidth = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_sticker_width, 0);
-            stickerHeight = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_sticker_height, 0);
+            rawStickerWidth = stickerWidth = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_sticker_init_width, 0);
+            rawStickerHeight = stickerHeight = ta.getDimensionPixelOffset(R.styleable.StickerView_stv_sticker_init_height, 0);
+            stickerScaleRatio = ta.getFloat(R.styleable.StickerView_stv_sticker_init_scale_ratio, 0);
 
             lineColor = ta.getColor(R.styleable.StickerView_stv_line_color, Color.BLACK);
-            pe_interval = ta.getFloat(R.styleable.StickerView_stv_pe_interval, 0);
-            pe_phase = ta.getFloat(R.styleable.StickerView_stv_pe_phase, 0);
+            linePathInterval = ta.getFloat(R.styleable.StickerView_stv_line_pe_interval, 0);
+            linePathPhase = ta.getFloat(R.styleable.StickerView_stv_line_pe_phase, 0);
 
             dotRadius = ta.getDimensionPixelSize(R.styleable.StickerView_stv_dotRadius, 0);
             dotColor = ta.getColor(R.styleable.StickerView_stv_dotColor, Color.BLACK);
 
+            text = ta.getString(R.styleable.StickerView_stv_text);
             textEnabled = ta.getBoolean(R.styleable.StickerView_stv_text_enable, true);
             textBgColor = ta.getColor(R.styleable.StickerView_stv_text_bg_color, Color.BLACK);
             textBgRoundSize = ta.getDimensionPixelSize(R.styleable.StickerView_stv_text_bg_round, 20);
@@ -433,6 +496,27 @@ public class StickerView extends View {
             proportionalZoom = ta.getBoolean(R.styleable.StickerView_stv_proportional_zoom, true);
             marginStart = ta.getDimensionPixelSize(R.styleable.StickerView_stv_content_margin_start, 0);
             marginTop = ta.getDimensionPixelSize(R.styleable.StickerView_stv_content_margin_top, 0);
+            minScale = ta.getFloat(R.styleable.StickerView_stv_min_scale, minScale);
+            maxScale = ta.getFloat(R.styleable.StickerView_stv_max_scale, maxScale);
+        }
+        void setStickerWidth0(int width){
+            rawStickerWidth = stickerWidth = width;
+        }
+        void setStickerHeight0(int height){
+            rawStickerHeight = stickerHeight = height;
+        }
+        void setStickerWidthHeight(Bitmap sticker){
+            if(stickerScaleRatio > 0){
+                setStickerWidth0((int) (sticker.getWidth() * stickerScaleRatio));
+                setStickerHeight0((int) (sticker.getHeight() * stickerScaleRatio));
+            }else {
+                if(stickerWidth <= 0){
+                    setStickerWidth0(sticker.getWidth());
+                }
+                if(stickerHeight <= 0){
+                    setStickerHeight0(sticker.getHeight());
+                }
+            }
         }
     }
 

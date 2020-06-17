@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="StickerView">
-        <attr name="stv_sticker_width" format="dimension|reference"/>
-        <attr name="stv_sticker_height" format="dimension|reference"/>
+        <!-- init sticker width and height -->
+        <attr name="stv_sticker_init_width" format="dimension|reference"/>
+        <attr name="stv_sticker_init_height" format="dimension|reference"/>
+        <!-- init sticker width and height by scale-->
+        <attr name="stv_sticker_init_scale_ratio" format="float|reference"/>
 
         <attr name="stv_line_color" format="color|reference"/>
+        <attr name="stv_line_pe_interval" format="float|reference"/>
+        <attr name="stv_line_pe_phase" format="float|reference"/>
 
-        <attr name="stv_pe_interval" format="float|reference"/>
-        <attr name="stv_pe_phase" format="float|reference"/>
         <attr name="stv_dotRadius" format="dimension|reference"/>
         <attr name="stv_dotColor" format="color|reference"/>
 
         <attr name="stv_text_enable" format="boolean|reference"/>
+        <attr name="stv_text" format="string|reference"/>
         <attr name="stv_text_bg_round" format="dimension|reference"/>
         <attr name="stv_text_bg_color" format="color|reference"/>
         <attr name="stv_text_color" format="color|reference"/>
@@ -27,5 +31,9 @@
         <!-- 内容距离 -100. 表示距离右边100 -->
         <attr name="stv_content_margin_start" format="dimension|reference"/>
         <attr name="stv_content_margin_top" format="dimension|reference"/>
+
+        <!-- min scale -->
+        <attr name="stv_min_scale" format="float|reference"/>
+        <attr name="stv_max_scale" format="float|reference"/>
     </declare-styleable>
 </resources>

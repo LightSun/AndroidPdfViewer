@@ -5,16 +5,17 @@
         <item name="android:layout_height">match_parent</item>
         <item name="android:padding">8dp</item>
 
-        <item name="stv_sticker_width">140dp</item>
-        <item name="stv_sticker_height">72dp</item>
+        <item name="stv_sticker_init_width">140dp</item>
+        <item name="stv_sticker_init_height">72dp</item>
         <item name="stv_line_color">#bfbfbf</item>
 
-        <item name="stv_pe_interval">5</item>
-        <item name="stv_pe_phase">1</item>
+        <item name="stv_line_pe_interval">5</item>
+        <item name="stv_line_pe_phase">1</item>
         <item name="stv_dotRadius">6dp</item>
         <item name="stv_dotColor">#2d8fff</item>
 
-        <item name="stv_text_enable">false</item>
+        <item name="stv_text">旋转</item>
+        <item name="stv_text_enable">true</item>
         <item name="stv_text_bg_round">4dp</item>
         <item name="stv_text_bg_color">#2d8fff</item>
 
