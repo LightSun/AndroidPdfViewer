@@ -19,7 +19,9 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
@@ -33,12 +35,14 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.github.barteksc.pdfviewer.PDFView;
+import com.github.barteksc.pdfviewer.listener.OnDrawListener;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.heaven7.android.util2.LauncherIntent;
+import com.heaven7.core.util.Logger;
 import com.shockwave.pdfium.PdfDocument;
 
 import org.androidannotations.annotations.AfterViews;
@@ -124,6 +128,12 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
         }
         setTitle(pdfFileName);
 
+        mIv_iv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pdfView.getPageRect();
+            }
+        });
        // SimpleTouchListener.attach(pdfView, mIv_iv);
     }
 
@@ -145,7 +155,6 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 .pageSnap(true)
                 .load();
     }
-
     private void displayFromUri(Uri uri) {
         pdfFileName = getFileName(uri);
 

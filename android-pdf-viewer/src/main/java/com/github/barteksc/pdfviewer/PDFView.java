@@ -654,6 +654,28 @@ public class PDFView extends RelativeLayout {
         canvas.translate(-currentXOffset, -currentYOffset);
     }
 
+    /**
+     * get current page rect range in screen coords.
+     * @return the page rect
+     * @since 10.0.1
+     */
+    public RectF getPageRect(){
+        int page = getCurrentPage();
+        SizeF pageSize = pdfFile.getScaledPageSize(page, getZoom());
+
+        int pageX, pageY;
+        if (isSwipeVertical()) {
+            pageX = (int) pdfFile.getSecondaryPageOffset(page, getZoom());
+            pageY = (int) pdfFile.getPageOffset(page, getZoom());
+        } else {
+            pageY = (int) pdfFile.getSecondaryPageOffset(page, getZoom());
+            pageX = (int) pdfFile.getPageOffset(page, getZoom());
+        }
+        pageX += currentXOffset;
+        pageY += currentYOffset;
+        return new RectF(pageX, pageY, pageX + pageSize.getWidth(), pageY + pageSize.getHeight());
+    }
+
     private void drawWithListener(Canvas canvas, int page, OnDrawListener listener) {
         if (listener != null) {
             float translateX, translateY;

@@ -16,6 +16,7 @@
 package com.github.barteksc.pdfviewer;
 
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -199,11 +200,14 @@ class DragPinchManager implements GestureDetector.OnGestureListener, GestureDete
     }
 
     private void log() {
-        PdfFile pdfFile = pdfView.getPdfFile();
+        /*PdfFile pdfFile = pdfView.getPdfFile();
         String str = String.format(Locale.getDefault(), "page = %d,xOffset = %f, yOffset = %f, zoom = %f, \n w =%f, h = %f",
                 pdfView.getCurrentPage(), pdfView.getCurrentXOffset(), pdfView.getCurrentYOffset(),
                 pdfView.getZoom(), pdfFile.getMaxPageWidth(), pdfFile.getMaxPageHeight());
-        System.out.println("PdfView >>> " + str);
+        System.out.println("PdfView >>> " + str);*/
+
+        RectF pageRect = pdfView.getPageRect();
+        System.out.println("onScrollEnd: page = " + pdfView.getCurrentPage() + " ,rect = " + pageRect);
     }
 
     @Override
