@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
 
+    <Button
+        android:id="@+id/bt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="reset"
+        android:textAllCaps="false"
+        android:gravity="center"
+        />
     <com.github.barteksc.sample.StickerView
         android:id="@+id/sticker_view"
+        android:layout_above="@+id/bt"
         style="@style/Common_sticker_view"
         />
-
-</LinearLayout>
+</RelativeLayout>

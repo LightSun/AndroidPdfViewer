@@ -959,6 +959,10 @@ public class PDFView extends RelativeLayout {
      * Animate to the nearest snapping position for the current SnapPolicy
      */
     public void performPageSnap() {
+        performPageSnap(true);
+    }
+
+    public void performPageSnap(boolean animate) {
         if (!pageSnap || pdfFile == null || pdfFile.getPagesCount() == 0) {
             return;
         }
@@ -967,12 +971,19 @@ public class PDFView extends RelativeLayout {
         if (edge == SnapEdge.NONE) {
             return;
         }
-
         float offset = snapOffsetForPage(centerPage, edge);
         if (swipeVertical) {
-            animationManager.startYAnimation(currentYOffset, -offset);
+            if(!animate){
+                moveTo(currentXOffset, -offset);
+            }else {
+                animationManager.startYAnimation(currentYOffset, -offset);
+            }
         } else {
-            animationManager.startXAnimation(currentXOffset, -offset);
+            if(!animate){
+                moveTo(-offset, currentYOffset);
+            }else {
+                animationManager.startXAnimation(currentXOffset, -offset);
+            }
         }
     }
 
