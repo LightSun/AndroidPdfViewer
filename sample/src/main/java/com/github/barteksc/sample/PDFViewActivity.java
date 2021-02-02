@@ -197,7 +197,7 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
             public void run() {
                 System.out.println(String.format("pdfView.w = %d, size = %.2f",
                         pdfView.getWidth(), pdfView.getPageSize(page).getWidth()));
-                pdfView.zoomCenteredTo((pdfView.getWidth() + 100) * 1.0f / pdfView.getPageSize(page).getWidth(),
+                pdfView.zoomCenteredTo((pdfView.getWidth()) * 1.0f / pdfView.getPageSize(page).getWidth(),
                         new PointF(pdfView.getWidth() * 1.0f / 2, pdfView.getHeight() * 1.0f / 2));
                 pdfView.loadPageByOffset();
                 pdfView.performPageSnap();
