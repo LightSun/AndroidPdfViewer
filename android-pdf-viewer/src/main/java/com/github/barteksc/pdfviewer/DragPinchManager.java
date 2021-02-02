@@ -190,7 +190,7 @@ class DragPinchManager implements GestureDetector.OnGestureListener, GestureDete
         return true;
     }
 
-    private void onScrollEnd(MotionEvent event) {
+    public void onScrollEnd() {
         pdfView.loadPages();
         hideHandle();
         //log();
@@ -312,7 +312,7 @@ class DragPinchManager implements GestureDetector.OnGestureListener, GestureDete
         if (event.getAction() == MotionEvent.ACTION_UP) {
             if (scrolling) {
                 scrolling = false;
-                onScrollEnd(event);
+                onScrollEnd();
             }
         }
         return retVal;

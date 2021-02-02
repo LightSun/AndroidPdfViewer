@@ -118,7 +118,7 @@ public class Callbacks {
         this.onPageChangeListener = onPageChangeListener;
     }
 
-    public void callOnPageChange(int page, int pagesCount) {
+    public void callOnPageChange(int old, int page, int pagesCount) {
         if (onPageChangeListener != null) {
             onPageChangeListener.onPageChanged(page, pagesCount);
         }

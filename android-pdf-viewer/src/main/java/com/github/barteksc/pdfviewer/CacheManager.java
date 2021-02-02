@@ -177,7 +177,7 @@ class CacheManager {
         }
     }
 
-    class PagePartComparator implements Comparator<PagePart> {
+    static final class PagePartComparator implements Comparator<PagePart> {
         @Override
         public int compare(PagePart part1, PagePart part2) {
             if (part1.getCacheOrder() == part2.getCacheOrder()) {

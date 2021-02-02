@@ -19,9 +19,8 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Rect;
+import android.graphics.PointF;
 import android.net.Uri;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
@@ -29,20 +28,17 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.github.barteksc.pdfviewer.PDFView;
-import com.github.barteksc.pdfviewer.listener.OnDrawListener;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.heaven7.android.util2.LauncherIntent;
-import com.heaven7.core.util.Logger;
 import com.shockwave.pdfium.PdfDocument;
 
 import org.androidannotations.annotations.AfterViews;
@@ -66,6 +62,7 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
     public static final int PERMISSION_CODE = 42042;
 
     public static final String SAMPLE_FILE = "sample.pdf";
+    //public static final String SAMPLE_FILE = "1.pdf";
     public static final String READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
 
     @ViewById
@@ -99,12 +96,13 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
 
         launchPicker();
     }
+
     @OptionsItem(R.id.test_sticker)
-    void testSticker(){
-         new LauncherIntent.Builder()
-                 .setClass(this,TestStickerViewActivity.class)
-                 .build()
-                 .startActivity();
+    void testSticker() {
+        new LauncherIntent.Builder()
+                .setClass(this, TestStickerViewActivity.class)
+                .build()
+                .startActivity();
     }
 
     void launchPicker() {
@@ -134,11 +132,12 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 pdfView.getPageRect();
             }
         });
-       // SimpleTouchListener.attach(pdfView, mIv_iv);
+        // SimpleTouchListener.attach(pdfView, mIv_iv);
     }
 
     private void displayFromAsset(String assetFileName) {
         pdfFileName = assetFileName;
+        pdfView.setMaxZoom(200);
 
         pdfView.fromAsset(SAMPLE_FILE)
                 .defaultPage(pageNumber)
@@ -153,8 +152,20 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 .pageFitPolicy(FitPolicy.BOTH)
                 .pageFling(true)
                 .pageSnap(true)
+                /*.onRender(new OnRenderListener() {
+                    @Override
+                    public void onInitiallyRendered(int nbPages) {
+                        MainWorker.postDelay(20, new Runnable() {
+                            @Override
+                            public void run() {
+                                pdfView.fitToWidth(pdfView.getCurrentPage());
+                            }
+                        });
+                    }
+                })*/
                 .load();
     }
+
     private void displayFromUri(Uri uri) {
         pdfFileName = getFileName(uri);
 
@@ -178,9 +189,21 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
     }
 
     @Override
-    public void onPageChanged(int page, int pageCount) {
+    public void onPageChanged(final int page, int pageCount) {
         pageNumber = page;
         setTitle(String.format("%s %s / %s", pdfFileName, page + 1, pageCount));
+        Runnable task = new Runnable() {
+            @Override
+            public void run() {
+                System.out.println(String.format("pdfView.w = %d, size = %.2f",
+                        pdfView.getWidth(), pdfView.getPageSize(page).getWidth()));
+                pdfView.zoomCenteredTo((pdfView.getWidth() + 100) * 1.0f / pdfView.getPageSize(page).getWidth(),
+                        new PointF(pdfView.getWidth() * 1.0f / 2, pdfView.getHeight() * 1.0f / 2));
+                pdfView.loadPageByOffset();
+                pdfView.performPageSnap();
+            }
+        };
+        runOnUiThread(task);
     }
 
     public String getFileName(Uri uri) {

@@ -326,6 +326,7 @@ public class PDFView extends RelativeLayout {
             return;
         }
 
+        int old = this.currentPage;
         // Check the page number and makes the
         // difference between UserPages and DocumentPages
         pageNb = pdfFile.determineValidPageNumberFrom(pageNb);
@@ -337,7 +338,11 @@ public class PDFView extends RelativeLayout {
             scrollHandle.setPageNum(currentPage + 1);
         }
 
-        callbacks.callOnPageChange(currentPage, pdfFile.getPagesCount());
+        callbacks.callOnPageChange(old, currentPage, pdfFile.getPagesCount());
+    }
+
+    public void dispatchEnd(){
+        dragPinchManager.onScrollEnd();
     }
 
     /**
@@ -932,7 +937,7 @@ public class PDFView extends RelativeLayout {
         redraw();
     }
 
-    void loadPageByOffset() {
+    public void loadPageByOffset() {
         if (0 == pdfFile.getPagesCount()) {
             return;
         }
