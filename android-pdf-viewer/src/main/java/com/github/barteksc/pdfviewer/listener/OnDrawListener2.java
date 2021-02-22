@@ -8,7 +8,7 @@ public abstract class OnDrawListener2 implements OnDrawListener{
     private float translateX;
     private float translateY;
 
-    public void reportTranslate(float transX, float tranxY){
+    public void reportTranslates(float transX, float tranxY){
         this.translateX = transX;
         this.translateY = tranxY;
     }

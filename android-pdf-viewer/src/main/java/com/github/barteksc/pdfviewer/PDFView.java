@@ -695,7 +695,7 @@ public class PDFView extends RelativeLayout {
 
             canvas.translate(translateX, translateY);
             if(listener instanceof OnDrawListener2){
-                ((OnDrawListener2) listener).reportTranslate(translateX, translateY);
+                ((OnDrawListener2) listener).reportTranslates(translateX, translateY);
             }
             SizeF size = pdfFile.getPageSize(page);
             listener.onLayerDrawn(canvas,
