@@ -94,8 +94,8 @@ public class PdfFile {
     public void addImage(int pageIndex, Bitmap bitmap, Matrix matrix){
        pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, matrix);
     }
-    public void savePdf(PDFWriter writer, boolean incremental){
-        pdfiumCore.savePdf(pdfDocument, writer, incremental);
+    public void savePdf(String path, boolean incremental){
+        pdfiumCore.savePdf(pdfDocument, path, incremental);
     }
 
     private void setup(Size viewSize) {

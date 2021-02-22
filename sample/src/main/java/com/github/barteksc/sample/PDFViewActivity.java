@@ -180,13 +180,13 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                         });
                     }
                 })*/
-                .onDraw(new OnDrawListener() {
+                /*.onDraw(new OnDrawListener() {
                     Rect rect = new Rect(0, 0, 100, 100);
                     @Override
                     public void onLayerDrawn(Canvas canvas, float pageWidth, float pageHeight, int displayedPage) {
                         canvas.drawBitmap(bitmap, srcRect, rect , null);
                     }
-                })
+                })*/
                 .load();
     }
 
@@ -234,24 +234,27 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 pdfView.loadPageByOffset();
                 pdfView.performPageSnap();
 
-                //testAddImage(page);
+                testAddImage(page);
             }
         };
         runOnUiThread(task);
     }
 
-    private void testAddImage(final int page) {
+    private synchronized void testAddImage(final int page) {
+        System.out.println("testAddImage>>> write start");
         Schedulers.io().newWorker().schedule(new Runnable() {
             @Override
             public void run() {
-                String path = Environment.getExternalStorageDirectory() + "/test1.pdf";
-                PDFWriterImpl writer = new PDFWriterImpl(new File(path));
+                synchronized (PDFViewActivity.this){
+                    String path = Environment.getExternalStorageDirectory() + "/test1.pdf";
 
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
-                Matrix matrix = new Matrix();
-                pdfView.getPdfFile().addImage(page, bitmap, matrix);
-                pdfView.getPdfFile().savePdf(writer, true);
-                Toaster.show(getApplicationContext(), "add image is called");
+                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+                    Matrix matrix = new Matrix();
+                    pdfView.getPdfFile().addImage(page, bitmap, matrix);
+                    pdfView.getPdfFile().savePdf(path, false);
+                    System.out.println("testAddImage>>> write ok");
+                    Toaster.show(getApplicationContext(), "add image is called");
+                }
             }
         });
     }
