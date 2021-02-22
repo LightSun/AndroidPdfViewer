@@ -42,6 +42,7 @@ import com.github.barteksc.pdfviewer.link.DefaultLinkHandler;
 import com.github.barteksc.pdfviewer.link.LinkHandler;
 import com.github.barteksc.pdfviewer.listener.Callbacks;
 import com.github.barteksc.pdfviewer.listener.OnDrawListener;
+import com.github.barteksc.pdfviewer.listener.OnDrawListener2;
 import com.github.barteksc.pdfviewer.listener.OnErrorListener;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnLongPressListener;
@@ -693,6 +694,9 @@ public class PDFView extends RelativeLayout {
             }
 
             canvas.translate(translateX, translateY);
+            if(listener instanceof OnDrawListener2){
+                ((OnDrawListener2) listener).reportTranslate(translateX, translateY);
+            }
             SizeF size = pdfFile.getPageSize(page);
             listener.onLayerDrawn(canvas,
                     toCurrentScale(size.getWidth()),
