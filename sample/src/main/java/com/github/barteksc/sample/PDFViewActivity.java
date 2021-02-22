@@ -19,9 +19,15 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -33,12 +39,17 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.github.barteksc.pdfviewer.PDFView;
+import com.github.barteksc.pdfviewer.listener.OnDrawListener;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
+import com.heaven7.android.pdfium.PDFWriterImpl;
 import com.heaven7.android.util2.LauncherIntent;
+import com.heaven7.core.util.MainWorker;
+import com.heaven7.core.util.Toaster;
+import com.heaven7.java.pc.schedulers.Schedulers;
 import com.shockwave.pdfium.PdfDocument;
 
 import org.androidannotations.annotations.AfterViews;
@@ -49,7 +60,10 @@ import org.androidannotations.annotations.OptionsItem;
 import org.androidannotations.annotations.OptionsMenu;
 import org.androidannotations.annotations.ViewById;
 
+import java.io.File;
 import java.util.List;
+
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 @EActivity(R.layout.activity_main)
 @OptionsMenu(R.menu.options)
@@ -82,12 +96,12 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
     @OptionsItem(R.id.pickFile)
     void pickFile() {
         int permissionCheck = ContextCompat.checkSelfPermission(this,
-                READ_EXTERNAL_STORAGE);
+                WRITE_EXTERNAL_STORAGE);
 
         if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(
                     this,
-                    new String[]{READ_EXTERNAL_STORAGE},
+                    new String[]{WRITE_EXTERNAL_STORAGE},
                     PERMISSION_CODE
             );
 
@@ -139,6 +153,9 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
         pdfFileName = assetFileName;
         pdfView.setMaxZoom(200);
 
+        final Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+        final Rect srcRect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
         pdfView.fromAsset(SAMPLE_FILE)
                 .defaultPage(pageNumber)
                 .onPageChange(this)
@@ -163,11 +180,20 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                         });
                     }
                 })*/
+                .onDraw(new OnDrawListener() {
+                    Rect rect = new Rect(0, 0, 100, 100);
+                    @Override
+                    public void onLayerDrawn(Canvas canvas, float pageWidth, float pageHeight, int displayedPage) {
+                        canvas.drawBitmap(bitmap, srcRect, rect , null);
+                    }
+                })
                 .load();
     }
 
     private void displayFromUri(Uri uri) {
         pdfFileName = getFileName(uri);
+
+        final Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
 
         pdfView.fromUri(uri)
                 .defaultPage(pageNumber)
@@ -175,6 +201,12 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 .enableAnnotationRendering(true)
                 .onLoad(this)
                 .scrollHandle(new DefaultScrollHandle(this))
+                .onDraw(new OnDrawListener() {
+                    @Override
+                    public void onLayerDrawn(Canvas canvas, float pageWidth, float pageHeight, int displayedPage) {
+                        canvas.drawBitmap(bitmap, 0, 0 , null);
+                    }
+                })
                 .spacing(10) // in dp
                 .onPageError(this)
                 .load();
@@ -201,9 +233,27 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                         new PointF(pdfView.getWidth() * 1.0f / 2, pdfView.getHeight() * 1.0f / 2));
                 pdfView.loadPageByOffset();
                 pdfView.performPageSnap();
+
+                //testAddImage(page);
             }
         };
         runOnUiThread(task);
+    }
+
+    private void testAddImage(final int page) {
+        Schedulers.io().newWorker().schedule(new Runnable() {
+            @Override
+            public void run() {
+                String path = Environment.getExternalStorageDirectory() + "/test1.pdf";
+                PDFWriterImpl writer = new PDFWriterImpl(new File(path));
+
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+                Matrix matrix = new Matrix();
+                pdfView.getPdfFile().addImage(page, bitmap, matrix);
+                pdfView.getPdfFile().savePdf(writer, true);
+                Toaster.show(getApplicationContext(), "add image is called");
+            }
+        });
     }
 
     public String getFileName(Uri uri) {

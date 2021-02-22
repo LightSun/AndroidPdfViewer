@@ -16,6 +16,7 @@
 package com.github.barteksc.pdfviewer;
 
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
@@ -24,6 +25,7 @@ import android.util.SparseBooleanArray;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.github.barteksc.pdfviewer.util.PageSizeCalculator;
+import com.heaven7.android.pdfium.PDFWriter;
 import com.shockwave.pdfium.PdfDocument;
 import com.shockwave.pdfium.PdfiumCore;
 import com.shockwave.pdfium.util.Size;
@@ -87,6 +89,13 @@ public class PdfFile {
         this.autoSpacing = autoSpacing;
         this.fitEachPage = fitEachPage;
         setup(viewSize);
+    }
+
+    public void addImage(int pageIndex, Bitmap bitmap, Matrix matrix){
+       pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, matrix);
+    }
+    public void savePdf(PDFWriter writer, boolean incremental){
+        pdfiumCore.savePdf(pdfDocument, writer, incremental);
     }
 
     private void setup(Size viewSize) {
