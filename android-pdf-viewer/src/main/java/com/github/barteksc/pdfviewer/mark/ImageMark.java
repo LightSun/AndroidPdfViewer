@@ -6,10 +6,10 @@ import java.util.Arrays;
  */
 public class ImageMark {
     private int pageIndex;
-    private int width; //result width
-    private int height;
-    private int left;
-    private int top;
+    private float width; //result width
+    private float height;
+    private float left;
+    private float top;
     private float rotate; //current only support 0-90-180-270 and etc.
 
     protected ImageMark(ImageMark.Builder builder) {
@@ -48,19 +48,19 @@ public class ImageMark {
         return this.pageIndex;
     }
 
-    public int getWidth() {
+    public float getWidth() {
         return this.width;
     }
 
-    public int getHeight() {
+    public float getHeight() {
         return this.height;
     }
 
-    public int getLeft() {
+    public float getLeft() {
         return this.left;
     }
 
-    public int getTop() {
+    public float getTop() {
         return this.top;
     }
 
@@ -94,10 +94,10 @@ public class ImageMark {
 
     public static class Builder {
         private int pageIndex;
-        private int width; //result width
-        private int height;
-        private int left;
-        private int top;
+        private float width; //result width
+        private float height;
+        private float left;
+        private float top;
         private float rotate; //current only support 0-90-180-270 and etc.
 
         public Builder setPageIndex(int pageIndex) {
@@ -105,22 +105,22 @@ public class ImageMark {
             return this;
         }
 
-        public Builder setWidth(int width) {
+        public Builder setWidth(float width) {
             this.width = width;
             return this;
         }
 
-        public Builder setHeight(int height) {
+        public Builder setHeight(float height) {
             this.height = height;
             return this;
         }
 
-        public Builder setLeft(int left) {
+        public Builder setLeft(float left) {
             this.left = left;
             return this;
         }
 
-        public Builder setTop(int top) {
+        public Builder setTop(float top) {
             this.top = top;
             return this;
         }
