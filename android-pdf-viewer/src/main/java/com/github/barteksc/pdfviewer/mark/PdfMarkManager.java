@@ -64,7 +64,7 @@ public class PdfMarkManager extends OnDrawListener2 {
     }
 
     protected void onDrawImageMark(Canvas canvas, ImageMark mark, float pageWidth, float pageHeight, Bitmap bitmap){
-        canvas.drawBitmap(bitmap, mark.getLeft() + getTranslateX(), mark.getTop() + getTranslateY(), null);
+        canvas.drawBitmap(bitmap, mark.getLeft() - getTranslateX(), mark.getTop() - getTranslateY(), null);
     }
 
     public interface ImageOwner{
