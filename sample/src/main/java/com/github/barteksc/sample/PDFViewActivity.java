@@ -23,8 +23,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Environment;
@@ -45,9 +43,7 @@ import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
-import com.heaven7.android.pdfium.PDFWriterImpl;
 import com.heaven7.android.util2.LauncherIntent;
-import com.heaven7.core.util.MainWorker;
 import com.heaven7.core.util.Toaster;
 import com.heaven7.java.pc.schedulers.Schedulers;
 import com.shockwave.pdfium.PdfDocument;
@@ -60,7 +56,6 @@ import org.androidannotations.annotations.OptionsItem;
 import org.androidannotations.annotations.OptionsMenu;
 import org.androidannotations.annotations.ViewById;
 
-import java.io.File;
 import java.util.List;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -109,6 +104,11 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
         }
 
         launchPicker();
+    }
+
+    @OptionsItem(R.id.addImage)
+    void addImage(){
+        testAddImage(pdfView.getCurrentPage());
     }
 
     @OptionsItem(R.id.test_sticker)
@@ -227,19 +227,28 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
         Runnable task = new Runnable() {
             @Override
             public void run() {
-                System.out.println(String.format("pdfView.w = %d, size = %.2f",
+              /*  System.out.println(String.format("pdfView.w = %d, size = %.2f",
                         pdfView.getWidth(), pdfView.getPageSize(page).getWidth()));
                 pdfView.zoomCenteredTo((pdfView.getWidth()) * 1.0f / pdfView.getPageSize(page).getWidth(),
                         new PointF(pdfView.getWidth() * 1.0f / 2, pdfView.getHeight() * 1.0f / 2));
                 pdfView.loadPageByOffset();
-                pdfView.performPageSnap();
+                pdfView.performPageSnap();*/
 
-                testAddImage(page);
+               /* MainWorker.postDelay(500, new Runnable() {
+                    @Override
+                    public void run() {
+                        testAddImage(page);
+                    }
+                });*/
             }
         };
         runOnUiThread(task);
     }
 
+    /**
+     * 1, 坐标换算
+     * 2， 重绘
+     */
     private synchronized void testAddImage(final int page) {
         System.out.println("testAddImage>>> write start");
         Schedulers.io().newWorker().schedule(new Runnable() {
@@ -248,12 +257,17 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 synchronized (PDFViewActivity.this){
                     String path = Environment.getExternalStorageDirectory() + "/test1.pdf";
 
-                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
-                    Matrix matrix = new Matrix();
-                    pdfView.getPdfFile().addImage(page, bitmap, matrix);
+                    Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_open_in_browser_grey_700_48dp);
+                    pdfView.getPdfFile().addImage(page, bitmap, 0, 100); //left, bottom. the screen values
                     pdfView.getPdfFile().savePdf(path, false);
                     System.out.println("testAddImage>>> write ok");
                     Toaster.show(getApplicationContext(), "add image is called");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            pdfView.redrawPages(pdfView.getCurrentPage());
+                        }
+                    });
                 }
             }
         });

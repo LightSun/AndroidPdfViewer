@@ -72,6 +72,7 @@ import com.shockwave.pdfium.util.SizeF;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -680,6 +681,23 @@ public class PDFView extends RelativeLayout {
         pageX += currentXOffset;
         pageY += currentYOffset;
         return new RectF(pageX, pageY, pageX + pageSize.getWidth(), pageY + pageSize.getHeight());
+    }
+    /**
+     * redraw target pages.
+     * @param pages the pages
+     * @since 10.0.7
+     */
+    public void redrawPages(Integer... pages){
+        redrawPages(Arrays.asList(pages));
+    }
+    /**
+     * redraw target pages.
+     * @param pages the pages
+     * @since 10.0.7
+     */
+    public void redrawPages(List<Integer> pages){
+        cacheManager.recycle(pages);
+        loadPages();
     }
 
     private void drawWithListener(Canvas canvas, int page, OnDrawListener listener) {

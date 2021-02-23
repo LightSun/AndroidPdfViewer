@@ -31,5 +31,5 @@ dependencies {
     implementation 'org.androidannotations:androidannotations-api:4.6.0'
     annotationProcessor "org.androidannotations:androidannotations:4.6.0"
 
-    implementation 'com.github.LightSun:PdfiumAndroid:2.0.1'
+    //implementation 'com.github.LightSun:PdfiumAndroid:2.0.1'
 }

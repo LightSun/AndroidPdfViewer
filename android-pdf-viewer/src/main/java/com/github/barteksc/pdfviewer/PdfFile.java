@@ -25,7 +25,6 @@ import android.util.SparseBooleanArray;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.github.barteksc.pdfviewer.util.PageSizeCalculator;
-import com.heaven7.android.pdfium.PDFWriter;
 import com.shockwave.pdfium.PdfDocument;
 import com.shockwave.pdfium.PdfiumCore;
 import com.shockwave.pdfium.util.Size;
@@ -91,8 +90,8 @@ public class PdfFile {
         setup(viewSize);
     }
 
-    public void addImage(int pageIndex, Bitmap bitmap, Matrix matrix){
-       pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, matrix);
+    public void addImage(int pageIndex, Bitmap bitmap, int left, int top){
+       pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, left, top);
     }
     public void savePdf(String path, boolean incremental){
         pdfiumCore.savePdf(pdfDocument, path, incremental);

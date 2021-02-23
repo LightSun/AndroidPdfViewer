@@ -158,6 +158,37 @@ class CacheManager {
         }
     }
 
+    /**
+     * @since 10.0.7
+     */
+    public void recycle(List<Integer> pages){
+        ArrayList<PagePart> parts;
+        synchronized (passiveActiveLock) {
+            parts = new ArrayList<>(passiveCache);
+            for (PagePart part : parts) {
+                if (pages.contains(part.getPage())) {
+                    passiveCache.remove(part);
+                }
+            }
+            parts.clear();
+            parts.addAll(activeCache);
+            for (PagePart part : parts) {
+                if (pages.contains(part.getPage())) {
+                    activeCache.remove(part);
+                }
+            }
+        }
+        synchronized (thumbnails) {
+            parts.clear();
+            parts.addAll(thumbnails);
+            for (PagePart part : parts) {
+                if (pages.contains(part.getPage())) {
+                    thumbnails.remove(part);
+                }
+            }
+        }
+    }
+
     public void recycle() {
         synchronized (passiveActiveLock) {
             for (PagePart part : passiveCache) {

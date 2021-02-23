@@ -12,4 +12,10 @@
         android:icon="@drawable/lib_pick_ic_selected"
         android:title="test_sticker"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/addImage"
+        android:icon="@drawable/ic_open_in_browser_grey_700_48dp"
+        android:title="add image"
+        app:showAsAction="always" />
 </menu>
