@@ -211,26 +211,24 @@ JNI_FUNC(jlong, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex
         return 0;
     }
 
-    void *addr;
-    if ((ret = AndroidBitmap_lockPixels(env, bitmap, &addr)) != 0) {
+    int *addr;
+    if ((ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void **>(&addr))) != 0) {
         LOGE("Locking bitmap failed: %s", strerror(ret * -1));
         return 0;
     }
-    unsigned char *oldAddr = static_cast<unsigned char *>(addr);
-
     unsigned char *tmp;
     tmp = static_cast<unsigned char *>(malloc(h * w * sizeof(uint8_t) * 4));
 
-    //convert data
+    //convert data: argb -> bgra
+    int i , idx;
     for (int ih = 0; ih < h; ++ih) {
         for (int iw = 0; iw < w; ++iw) {
-            int i = ih * w + iw;
-            int idx = i * 4;
-            //argb -> bgra
-            tmp[idx] = oldAddr[idx + 3];
-            tmp[idx + 1] = oldAddr[idx + 2];
-            tmp[idx + 2] = oldAddr[idx + 1];
-            tmp[idx + 3] = oldAddr[idx];
+            i = ih * w + iw;
+            idx = i * 4;
+            tmp[idx] = static_cast<unsigned char>(addr[i] & 0xff);
+            tmp[idx + 1] = static_cast<unsigned char>((addr[i] >> 8) & 0xff);
+            tmp[idx + 2] = static_cast<unsigned char>((addr[i] >> 16) & 0xff);
+            tmp[idx + 3] = static_cast<unsigned char>((addr[i] >> 24) & 0xff);
         }
     }
 
@@ -263,6 +261,7 @@ JNI_FUNC(jlong, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex
          (float) FPDF_GetPageWidth(page), (float) FPDF_GetPageHeight(page));
     LOGD("w, h = %d, %d", width, height);
     FPDFBitmap_Destroy(pdfBitmap);
+    FPDFPage_CloseAnnot(anno);
 
     return reinterpret_cast<jlong>(image_object);
 }
