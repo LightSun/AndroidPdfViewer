@@ -5,11 +5,13 @@ import android.graphics.Bitmap;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Surface;
 
+import com.github.barteksc.pdfviewer.util.PdfViewUtils;
 import com.shockwave.pdfium.util.Size;
 
 import java.io.FileDescriptor;
@@ -32,16 +34,21 @@ public final class PdfiumCore {
         System.loadLibrary("pdfium");
         System.loadLibrary("pdfium-lib");
     }
-    public void addImage(PdfDocument doc, int pageIndex, Bitmap bitmap, int left, int top){
-        nInsertImage(doc.mNativeDocPtr, pageIndex, bitmap, left, top);
+    //return object ptr
+    public long addImage(PdfDocument doc, int pageIndex, Bitmap bitmap, float left, float top, int width, int height){
+        return nInsertImage(doc.mNativeDocPtr, pageIndex, bitmap, left, top, width, height);
+    }
+    public void removeImage(PdfDocument doc, int pageIndex, long objPtr){
+        nRemoveImage(doc.mNativeDocPtr, pageIndex, objPtr);
     }
     public void savePdf(PdfDocument doc, String path, boolean incremental){
         nSavePdf(doc.mNativeDocPtr, path, incremental);
     }
     private native void nSavePdf(long docPtr, String path, boolean incremental);
 
+    private native void nRemoveImage(long docPtr, int pageIndex, long annoPtr);
     //add a image to pdf
-    private native void nInsertImage(long docPtr, int pageIndex, Bitmap bitmap, int left, int top);
+    private native long nInsertImage(long docPtr, int pageIndex, Bitmap bitmap, float left, float top, int width, int height);
 
     private native long nativeOpenDocument(int fd, String password);
 
@@ -482,6 +489,20 @@ public final class PdfiumCore {
                 coords.right, coords.bottom);
         return new RectF(leftTop.x, leftTop.y, rightBottom.x, rightBottom.y);
     }
+
+    /**
+     * @return mapped coordinates
+     */
+    public RectF mapDeviceCoordsToPage(PdfDocument doc, int pageIndex, int startX, int startY, int sizeX,
+                                 int sizeY, int rotate, Rect coords) {
+
+        PointF leftTop = mapDeviceCoordsToPage(doc, pageIndex, startX, startY, sizeX, sizeY, rotate,
+                coords.left, coords.top);
+        PointF rightBottom = mapDeviceCoordsToPage(doc, pageIndex, startX, startY, sizeX, sizeY, rotate,
+                coords.right, coords.bottom);
+        return new RectF(leftTop.x, leftTop.y, rightBottom.x, rightBottom.y);
+    }
+
 
     /**
      * Convert the screen coordinates of a point to page coordinates.

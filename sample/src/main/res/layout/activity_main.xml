@@ -9,12 +9,11 @@
 
 	<ImageView
 		android:id="@+id/iv"
-		android:layout_width="100dp"
-		android:layout_height="100dp"
-		android:src="@drawable/ic_launcher"
+		android:layout_width="40px"
+		android:layout_height="50px"
+		android:src="#ffac5e"
 		android:layout_marginTop="200dp"
-		android:layout_marginStart="200dp"
-		android:visibility="gone"
+		android:layout_marginStart="10px"
 		/>
 
 

@@ -1,6 +1,8 @@
 package com.github.barteksc.pdfviewer.util;
 
+import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.graphics.RectF;
 
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.PdfFile;
@@ -12,6 +14,26 @@ import com.shockwave.pdfium.util.SizeF;
  * @since 10.0.0
  */
 public final class PdfViewUtils {
+
+    /**
+     * add an image to pdf's target page with cors
+     * @param view the pdfview
+     * @param page the page
+     * @param bitmap the bitmap
+     * @param srcRect the screen rects in pixes. origin is pdf's left-bottom.
+     * @since 10.0.7
+     */
+    public static void addImage(PDFView view, int page, Bitmap bitmap, RectF srcRect){
+        //RectF srcRect = new RectF(0, 10, 40 , 60);
+        RectF dstRect = PdfViewUtils.convertScreenToPdfPageRect(view, srcRect);
+        //System.out.println("page srcRect: " + srcRect);
+        //System.out.println("page dstRect: " + dstRect);
+        float sx = dstRect.width() / srcRect.width();
+        float sy = dstRect.height() / srcRect.height();
+        //sx = x / srcRect.left
+        view.getPdfFile().addImage(page, bitmap, dstRect.left * sx , srcRect.top * sy,
+                (int) dstRect.width(), (int) dstRect.height());
+    }
 
     public static PointF convertScreenPointToPdfPagePoint(PDFView pdfView, float x, float y) {
         PdfFile pdfFile = pdfView.getPdfFile();
@@ -34,16 +56,18 @@ public final class PdfViewUtils {
                 (int) pageSize.getHeight(), 0, (int) mappedX, (int) mappedY);
     }
 
-  /*  public static void convert(final PDFView mPdfView,final int x, final int y){
-        mPdfView.post(new Runnable() {
-            @Override
-            public void run() {
-                PointF p = convertScreenPointToPdfPagePoint(mPdfView, x, y);
-                String msg = String.format(Locale.getDefault(), "before: x = %d, y = %d. after: x = %f, y = %f",
-                        x, y, p.x, p.y);
-                System.out.println("mapDeviceCoordsToPage >>> " + msg);
-            }
-        });
-
-    }*/
+    /**
+     * convert screen rect to pdf's.
+     * @param pdfView the pdf view
+     * @param src the src rect
+     * @return the rect.
+     * @since 10.0.7
+     */
+    public static RectF convertScreenToPdfPageRect(PDFView pdfView, RectF src) {
+        PointF p = PdfViewUtils.convertScreenPointToPdfPagePoint(pdfView, src.left, src.top);
+        PointF p2 = PdfViewUtils.convertScreenPointToPdfPagePoint(pdfView, src.right, src.bottom);
+        RectF rectF = new RectF(p.x, p.y, p2.x, p2.y);
+        rectF.sort();
+        return rectF;
+    }
 }

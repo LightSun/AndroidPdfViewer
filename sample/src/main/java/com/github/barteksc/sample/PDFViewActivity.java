@@ -23,7 +23,9 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.OpenableColumns;
@@ -37,12 +39,14 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.github.barteksc.pdfviewer.PDFView;
+import com.github.barteksc.pdfviewer.PdfFile;
 import com.github.barteksc.pdfviewer.listener.OnDrawListener;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
+import com.github.barteksc.pdfviewer.util.PdfViewUtils;
 import com.heaven7.android.util2.LauncherIntent;
 import com.heaven7.core.util.Toaster;
 import com.heaven7.java.pc.schedulers.Schedulers;
@@ -251,6 +255,11 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
      */
     private synchronized void testAddImage(final int page) {
         System.out.println("testAddImage>>> write start");
+        Matrix mat = new Matrix();
+        float[] arr = new float[9];
+        //1, 0, 0, 1, 0, top //a, b, c, d ,e, f
+        //mat.getValues(arr);
+        //mat.setValues();
         Schedulers.io().newWorker().schedule(new Runnable() {
             @Override
             public void run() {
@@ -258,8 +267,26 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                     String path = Environment.getExternalStorageDirectory() + "/test1.pdf";
 
                     Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_open_in_browser_grey_700_48dp);
-                    pdfView.getPdfFile().addImage(page, bitmap, 0, 100); //left, bottom. the screen values
-                    pdfView.getPdfFile().savePdf(path, false);
+                    int left = 0 ;
+                    int top = 100;
+                    RectF pageRect = pdfView.getPageRect();
+                    System.out.println("page rect: " + pageRect + ", w = " + pageRect.width()
+                            + ", h = " + pageRect.height() + " , " + pdfView.getPageSize(page));
+                    PdfFile pdfFile = pdfView.getPdfFile();
+                    RectF srcRect = new RectF(0, 10, 40 , 60);
+                    //PdfViewUtils.convertScreenToPdfPageRect()
+                    RectF dstRect = PdfViewUtils.convertScreenToPdfPageRect(pdfView, srcRect);
+                    //pdfFile.mapRectToDevice(page, 0, 0, srcRect)
+                    System.out.println("page srcRect: " + srcRect);
+                    System.out.println("page dstRect: " + dstRect);
+                    float sx = dstRect.width() / srcRect.width();
+                    float sy = dstRect.height() / srcRect.height();
+                    //sx = x / srcRect.left
+
+                    pdfFile.addImage(page, bitmap, dstRect.left * sx , srcRect.top * sy,
+                            (int) dstRect.width(), (int) dstRect.height()); //left, bottom. the screen values
+                   // pdfFile.addImage(page, bitmap, dstRect);
+                    pdfFile.savePdf(path, false);
                     System.out.println("testAddImage>>> write ok");
                     Toaster.show(getApplicationContext(), "add image is called");
                     runOnUiThread(new Runnable() {

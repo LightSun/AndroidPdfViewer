@@ -90,8 +90,13 @@ public class PdfFile {
         setup(viewSize);
     }
 
-    public void addImage(int pageIndex, Bitmap bitmap, int left, int top){
-       pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, left, top);
+    public void addImage(int pageIndex, Bitmap bitmap,float left, float top, int w, int h){
+       pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, left, top, w, h);
+    }
+    //in pix: top as bottom for pdf
+    public void addImage(int pageIndex, Bitmap bitmap, float left, float top){
+        pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, left, top,
+                bitmap.getWidth(), bitmap.getHeight());
     }
     public void savePdf(String path, boolean incremental){
         pdfiumCore.savePdf(pdfDocument, path, incremental);
@@ -323,7 +328,11 @@ public class PdfFile {
         int docPage = documentPage(pageIndex);
         return pdfiumCore.getPageLinks(pdfDocument, docPage);
     }
-
+    public RectF mapRectFromDevice(int pageIndex, int startX, int startY, int sizeX, int sizeY,
+                                 Rect rect) {
+        int docPage = documentPage(pageIndex);
+        return pdfiumCore.mapDeviceCoordsToPage(pdfDocument, docPage, startX, startY, sizeX, sizeY, 0, rect);
+    }
     public RectF mapRectToDevice(int pageIndex, int startX, int startY, int sizeX, int sizeY,
                                  RectF rect) {
         int docPage = documentPage(pageIndex);
