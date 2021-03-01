@@ -21,9 +21,10 @@ public final class PdfViewUtils {
      * @param page the page
      * @param bitmap the bitmap
      * @param srcRect the screen rects in pixes. origin is pdf's left-bottom.
+     * @return the image ptr
      * @since 10.0.7
      */
-    public static void addImage(PDFView view, int page, Bitmap bitmap, RectF srcRect){
+    public static long addImage(PDFView view, int page, Bitmap bitmap, RectF srcRect){
         //RectF srcRect = new RectF(0, 10, 40 , 60);
         RectF dstRect = PdfViewUtils.convertScreenToPdfPageRect(view, srcRect);
         //System.out.println("page srcRect: " + srcRect);
@@ -31,7 +32,7 @@ public final class PdfViewUtils {
         float sx = dstRect.width() / srcRect.width();
         float sy = dstRect.height() / srcRect.height();
         //sx = x / srcRect.left
-        view.getPdfFile().addImage(page, bitmap, dstRect.left * sx , srcRect.top * sy,
+        return view.getPdfFile().addImage(page, bitmap, dstRect.left * sx , srcRect.top * sy,
                 (int) dstRect.width(), (int) dstRect.height());
     }
 

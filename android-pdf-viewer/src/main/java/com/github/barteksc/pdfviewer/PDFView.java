@@ -788,6 +788,18 @@ public class PDFView extends RelativeLayout {
     }
 
     /**
+     * this function is used for some special pdf. like to large page with small page on one pdf. may cause display exception.
+     * @param pageIndex the page index
+     * @since 10.0.7
+     */
+    public void loadPageToCenter(int pageIndex){
+        zoomCenteredTo((getWidth()) * 1.0f / getPageSize(pageIndex).getWidth(),
+                new PointF(getWidth() * 1.0f / 2, getHeight() * 1.0f / 2));
+        loadPageByOffset();
+        performPageSnap();
+    }
+
+    /**
      * Load all the parts around the center of the screen,
      * taking into account X and Y offsets, zoom level, and
      * the current page displayed

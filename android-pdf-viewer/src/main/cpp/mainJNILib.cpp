@@ -231,6 +231,7 @@ JNI_FUNC(jlong, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex
             tmp[idx + 3] = static_cast<unsigned char>((addr[i] >> 24) & 0xff);
         }
     }
+    AndroidBitmap_unlockPixels(env, bitmap);
 
     FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
 
@@ -837,7 +838,7 @@ static int writeBlock(FPDF_FILEWRITE *owner, const void *buffer, unsigned long s
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_shockwave_pdfium_PdfiumCore_nSavePdf(JNIEnv *env, jobject thiz, jlong docPtr,
-                                              jstring path, jboolean incremental) {
+                                              jstring path, jint flags) {
     auto str = env->GetStringUTFChars(path, NULL);
     //clear and allow write
     auto pFile = fopen(str, "wb+");
@@ -850,7 +851,7 @@ Java_com_shockwave_pdfium_PdfiumCore_nSavePdf(JNIEnv *env, jobject thiz, jlong d
     PdfToFdWriter writer;
     writer.dstFd = fileno(pFile);
     writer.WriteBlock = &writeBlock;
-    FPDF_BOOL success = FPDF_SaveAsCopy(doc->pdfDocument, &writer, 0);
+    FPDF_BOOL success = FPDF_SaveAsCopy(doc->pdfDocument, &writer, flags);
     fclose(pFile);
     if (!success) {
         env->ReleaseStringUTFChars(path, str);
@@ -860,15 +861,153 @@ Java_com_shockwave_pdfium_PdfiumCore_nSavePdf(JNIEnv *env, jobject thiz, jlong d
         env->ReleaseStringUTFChars(path, str);
     }
 }
+
 extern "C"
-JNIEXPORT void JNICALL
-Java_com_shockwave_pdfium_PdfiumCore_nRemoveImage(JNIEnv *env, jobject thiz, jlong docPtr,
-                                                  jint pageIndex, jlong objPtr) {
-    // TODO: implement nRemoveImage()
+JNIEXPORT jlong JNICALL
+Java_com_heaven7_android_pdf_PdfAnnotManager_nCreateAnnot(JNIEnv *env, jclass clazz, jlong docPtr,
+                                                          jint pageIndex) {
     DocumentFile *doc = reinterpret_cast<DocumentFile *>(docPtr);
     FPDF_PAGE page = FPDF_LoadPage(doc->pdfDocument, pageIndex);
     if (page == NULL) {
-        LOGE("nRemoveImage: Loaded page is null");
-        return;
+        LOGE("nInsertImage: Loaded page is null");
+        return 0;
     }
+    return reinterpret_cast<jlong>(FPDFPage_CreateAnnot(page, FPDF_ANNOT_STAMP));
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_heaven7_android_pdf_PdfAnnotManager_nAddImage(JNIEnv *env, jclass clazz, jlong doc_ptr,
+                                                       jint page_index, jlong anno_ptr,
+                                                       jobject bitmap, jfloat left, jfloat top,
+                                                       jint width, jint height, jboolean topAsBottom) {
+    DocumentFile *doc = reinterpret_cast<DocumentFile *>(doc_ptr);
+    FPDF_PAGE page = FPDF_LoadPage(doc->pdfDocument, page_index);
+    if (page == NULL) {
+        LOGE("nAddImage: Loaded page is null");
+        return 0;
+    }
+    FPDF_ANNOTATION anno = reinterpret_cast<FPDF_ANNOTATION>(anno_ptr);
+
+    AndroidBitmapInfo info;
+    int ret;
+    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
+        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
+        return 0;
+    }
+
+    int w = info.width;
+    int h = info.height;
+
+    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        LOGE("Bitmap format must be RGBA_8888");
+        return 0;
+    }
+
+    int *addr;
+    if ((ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void **>(&addr))) != 0) {
+        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
+        return 0;
+    }
+    unsigned char *tmp;
+    tmp = static_cast<unsigned char *>(malloc(h * w * sizeof(uint8_t) * 4));
+
+    //convert data: argb -> bgra
+    int i , idx;
+    for (int ih = 0; ih < h; ++ih) {
+        for (int iw = 0; iw < w; ++iw) {
+            i = ih * w + iw;
+            idx = i * 4;
+            tmp[idx] = static_cast<unsigned char>(addr[i] & 0xff);
+            tmp[idx + 1] = static_cast<unsigned char>((addr[i] >> 8) & 0xff);
+            tmp[idx + 2] = static_cast<unsigned char>((addr[i] >> 16) & 0xff);
+            tmp[idx + 3] = static_cast<unsigned char>((addr[i] >> 24) & 0xff);
+        }
+    }
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
+
+    FS_RECTF rect;
+
+    w = width;
+    h = height;
+    //as pdf use left-bottom as origin. we need adjust top.
+    if(!topAsBottom){
+         top = (float)FPDF_GetPageHeight(page) - height - top;
+    }
+    //FS_RECTF rect;
+    rect.left = left;
+    rect.bottom = top;
+    rect.right = left + w;
+    rect.top = top + h;
+    FPDFAnnot_SetRect(anno, &rect);
+
+    FPDF_PAGEOBJECT image_object = FPDFPageObj_NewImageObj(doc->pdfDocument);
+    //auto image_bitmap = FPDFBitmap_Create(w, h, 1);
+    //FPDFBitmap_FillRect(image_bitmap, 0, 0, w, h, 0xeeeecccc);
+    //FPDFImageObj_SetBitmap(&page, 0, image_object, image_bitmap);
+
+    FPDFImageObj_SetBitmap(&page, 0, image_object, pdfBitmap);
+    FPDFImageObj_SetMatrix(image_object, w, 0, 0, h, 0, 0);
+    FPDFPageObj_Transform(image_object, 1, 0, 0, 1, 0, top);
+    FPDFAnnot_AppendObject(anno, image_object);
+    LOGD("transform: left = %.2f, top = %.2f, pageW = %.2f, pageH = %.2f", left, top,
+         (float) FPDF_GetPageWidth(page), (float) FPDF_GetPageHeight(page));
+    LOGD("w, h = %d, %d", width, height);
+    FPDFBitmap_Destroy(pdfBitmap);
+    //FPDFPage_CloseAnnot(anno);
+
+    return reinterpret_cast<jlong>(image_object);
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_heaven7_android_pdf_PdfAnnotManager_nRemoveAnnot(JNIEnv *env, jclass clazz, jlong doc_ptr,
+                                                          jint page_index, jlong anno_ptr) {
+    DocumentFile *doc = reinterpret_cast<DocumentFile *>(doc_ptr);
+    FPDF_PAGE page = FPDF_LoadPage(doc->pdfDocument, page_index);
+    if (page == NULL) {
+        LOGE("nRemoveAnnot: Loaded page is null");
+        return JNI_FALSE;
+    }
+    FPDF_ANNOTATION anno = reinterpret_cast<FPDF_ANNOTATION>(anno_ptr);
+
+    auto index = FPDFPage_GetAnnotIndex(page, anno);
+    if(index != -1){
+        return static_cast<jboolean>(FPDFPage_RemoveAnnot(page, index));
+    }
+    return JNI_FALSE;
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_heaven7_android_pdf_PdfAnnotManager_nRemoveImage(JNIEnv *env, jclass clazz, jlong doc_ptr,
+                                                          jint page_index, jlong anno_ptr,
+                                                          jlong img_ptr) {
+    DocumentFile *doc = reinterpret_cast<DocumentFile *>(doc_ptr);
+    FPDF_PAGE page = FPDF_LoadPage(doc->pdfDocument, page_index);
+    if (page == NULL) {
+        LOGE("nRemoveImage: Loaded page is null");
+        return JNI_FALSE;
+    }
+    FPDF_ANNOTATION anno = reinterpret_cast<FPDF_ANNOTATION>(anno_ptr);
+    FPDF_PAGEOBJECT image_object = reinterpret_cast<FPDF_PAGEOBJECT>(img_ptr);
+
+    //need SetAP first. or else cause crash
+    FPDFAnnot_SetAP(anno, FPDF_ANNOT_APPEARANCEMODE_NORMAL, 0);
+    FPDFAnnot_SetFlags(anno, 0);
+
+    int idx = -1;
+    auto c = FPDFAnnot_GetObjectCount(anno);
+    for (int i = 0; i < c; ++i) {
+        if(FPDFAnnot_GetObject(anno, i) == image_object){
+            idx = i;
+            break;
+        }
+    }
+    if(idx >= 0){
+        return static_cast<jboolean>(FPDFAnnot_RemoveObject(anno, idx));
+    }
+    return JNI_FALSE;
 }

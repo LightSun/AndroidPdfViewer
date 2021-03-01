@@ -53,6 +53,7 @@ import com.heaven7.java.pc.schedulers.Schedulers;
 import com.shockwave.pdfium.PdfDocument;
 
 import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.NonConfigurationInstance;
 import org.androidannotations.annotations.OnActivityResult;
@@ -110,11 +111,6 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
         launchPicker();
     }
 
-    @OptionsItem(R.id.addImage)
-    void addImage(){
-        testAddImage(pdfView.getCurrentPage());
-    }
-
     @OptionsItem(R.id.test_sticker)
     void testSticker() {
         new LauncherIntent.Builder()
@@ -122,7 +118,19 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 .build()
                 .startActivity();
     }
+    private long imgPtr;
 
+    @Click(R.id.bt_add_img)
+    void clickImgAdd(View v){
+        testAddImage(pdfView.getCurrentPage());
+    }
+    @Click(R.id.bt_remove_img)
+    void clickImgRemove(View v){
+        if(imgPtr != 0){
+            pdfView.getPdfFile().removeImage(pdfView.getCurrentPage(), imgPtr);
+            pdfView.redrawPages(pdfView.getCurrentPage());
+        }
+    }
     void launchPicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/pdf");
@@ -283,10 +291,10 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                     float sy = dstRect.height() / srcRect.height();
                     //sx = x / srcRect.left
 
-                    pdfFile.addImage(page, bitmap, dstRect.left * sx , srcRect.top * sy,
+                    imgPtr = pdfFile.addImage(page, bitmap, dstRect.left * sx , srcRect.top * sy,
                             (int) dstRect.width(), (int) dstRect.height()); //left, bottom. the screen values
                    // pdfFile.addImage(page, bitmap, dstRect);
-                    pdfFile.savePdf(path, false);
+                    pdfFile.savePdf(path, 0);
                     System.out.println("testAddImage>>> write ok");
                     Toaster.show(getApplicationContext(), "add image is called");
                     runOnUiThread(new Runnable() {

@@ -6,20 +6,19 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/src/main/cpp SRC_ALL)
 
 SET(APP_LIBS_DIR ${CMAKE_SOURCE_DIR}/src/main/jniLibs/${ANDROID_ABI})
 
-#add_library(
-#        cpp_shared
- #       SHARED
-#        IMPORTED
-#)
+add_library(
+        cpp_shared
+        SHARED
+        IMPORTED
+)
 add_library(
         pdfium
         SHARED
         IMPORTED
 )
-#set_target_properties(cpp_shared PROPERTIES IMPORTED_LOCATION ${APP_LIBS_DIR}/libc++_shared.so
-#)
-set_target_properties(pdfium PROPERTIES IMPORTED_LOCATION ${APP_LIBS_DIR}/libpdfium.so
-)
+set_target_properties(cpp_shared PROPERTIES IMPORTED_LOCATION ${APP_LIBS_DIR}/libc++_shared.so)
+#set_target_properties(pdfium PROPERTIES IMPORTED_LOCATION ${APP_LIBS_DIR}/libpdfiumDebug.so)
+set_target_properties(pdfium PROPERTIES IMPORTED_LOCATION ${APP_LIBS_DIR}/libpdfium.so)
 
 add_library(
         pdfium-lib
@@ -36,6 +35,7 @@ find_library( # Sets the name of the path variable.
 
 target_link_libraries(
       pdfium-lib
+      cpp_shared
       pdfium
       ${log-lib}
       -landroid

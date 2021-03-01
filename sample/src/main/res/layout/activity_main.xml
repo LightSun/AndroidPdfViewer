@@ -1,20 +1,46 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
-	android:layout_height="match_parent">
+	android:layout_height="match_parent"
+	android:orientation="vertical"
+	>
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:orientation="horizontal"
+		>
+		<Button
+			android:id="@+id/bt_add_img"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textAllCaps="false"
+			android:text="img add"
+			/>
+		<Button
+			android:id="@+id/bt_remove_img"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textAllCaps="false"
+			android:text="img remove"
+			/>
+	</LinearLayout>
 
-    <com.github.barteksc.pdfviewer.PDFView
-        android:id="@+id/pdfView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+	<FrameLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+		<com.github.barteksc.pdfviewer.PDFView
+			android:id="@+id/pdfView"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent" />
 
-	<ImageView
-		android:id="@+id/iv"
-		android:layout_width="40px"
-		android:layout_height="50px"
-		android:src="#ffac5e"
-		android:layout_marginTop="200dp"
-		android:layout_marginStart="10px"
-		/>
+		<ImageView
+			android:id="@+id/iv"
+			android:layout_width="40px"
+			android:layout_height="50px"
+			android:src="#ffac5e"
+			android:layout_marginTop="200dp"
+			android:layout_marginStart="10px"
+			/>
+	</FrameLayout>
 
 
-</FrameLayout>
+</LinearLayout>

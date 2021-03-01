@@ -25,6 +25,7 @@ import android.util.SparseBooleanArray;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.github.barteksc.pdfviewer.util.PageSizeCalculator;
+import com.heaven7.android.pdf.PdfAnnotManager;
 import com.shockwave.pdfium.PdfDocument;
 import com.shockwave.pdfium.PdfiumCore;
 import com.shockwave.pdfium.util.Size;
@@ -77,6 +78,8 @@ public class PdfFile {
      */
     private int[] originalUserPages;
 
+    private final PdfAnnotManager mAnnotManager;
+
     PdfFile(PdfiumCore pdfiumCore, PdfDocument pdfDocument, FitPolicy pageFitPolicy, Size viewSize, int[] originalUserPages,
             boolean isVertical, int spacing, boolean autoSpacing, boolean fitEachPage) {
         this.pdfiumCore = pdfiumCore;
@@ -87,19 +90,51 @@ public class PdfFile {
         this.spacingPx = spacing;
         this.autoSpacing = autoSpacing;
         this.fitEachPage = fitEachPage;
+        this.mAnnotManager = new PdfAnnotManager(pdfDocument);
         setup(viewSize);
     }
 
-    public void addImage(int pageIndex, Bitmap bitmap,float left, float top, int w, int h){
-       pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, left, top, w, h);
+    /**
+     * get the pdf annotation manager
+     * @return the annotation manager
+     */
+    public PdfAnnotManager getPdfAnnotManager(){
+        return mAnnotManager;
     }
-    //in pix: top as bottom for pdf
-    public void addImage(int pageIndex, Bitmap bitmap, float left, float top){
-        pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, left, top,
-                bitmap.getWidth(), bitmap.getHeight());
+
+    /**
+     * add image to pdf annotation
+     * @param pageIndex the page index
+     * @param bitmap the bitmap
+     * @param left the left
+     * @param top the top
+     * @param w the w
+     * @param h the h
+     * @return the image ptr
+     * @since 10.0.7
+     */
+    public long addImage(int pageIndex, Bitmap bitmap,float left, float top, int w, int h){
+        //pdfiumCore.addImage(pdfDocument, pageIndex, bitmap, left, top, w, h);
+        return mAnnotManager.addImage(pageIndex, bitmap, left, top, w, h);
     }
-    public void savePdf(String path, boolean incremental){
-        pdfiumCore.savePdf(pdfDocument, path, incremental);
+    /**
+     * remove image to from pdf annotation
+     * @param pageIndex the page index
+     * @param imgPtr the image ptr which is from {{@link #addImage(int, Bitmap, float, float, int, int)}}.
+     * @since 10.0.7
+     */
+    public boolean removeImage(int pageIndex, long imgPtr){
+        return mAnnotManager.removeImage(pageIndex, imgPtr);
+    }
+
+    /**
+     * save pdf to target path
+     * @param path the file path
+     * @param flags create flags
+     * @since 10.0.7
+     */
+    public void savePdf(String path,int flags){
+        pdfiumCore.savePdf(pdfDocument, path, 0);
     }
 
     private void setup(Size viewSize) {

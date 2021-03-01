@@ -2,7 +2,6 @@ package com.shockwave.pdfium;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -11,7 +10,6 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Surface;
 
-import com.github.barteksc.pdfviewer.util.PdfViewUtils;
 import com.shockwave.pdfium.util.Size;
 
 import java.io.FileDescriptor;
@@ -31,6 +29,7 @@ public final class PdfiumCore {
         System.loadLibrary("modft2");
         System.loadLibrary("modpdfium");
         System.loadLibrary("jniPdfium");*/
+        //System.loadLibrary("c++_shared");
         System.loadLibrary("pdfium");
         System.loadLibrary("pdfium-lib");
     }
@@ -38,15 +37,11 @@ public final class PdfiumCore {
     public long addImage(PdfDocument doc, int pageIndex, Bitmap bitmap, float left, float top, int width, int height){
         return nInsertImage(doc.mNativeDocPtr, pageIndex, bitmap, left, top, width, height);
     }
-    public void removeImage(PdfDocument doc, int pageIndex, long objPtr){
-        nRemoveImage(doc.mNativeDocPtr, pageIndex, objPtr);
+    public void savePdf(PdfDocument doc, String path, int flags){
+        nSavePdf(doc.mNativeDocPtr, path, flags);
     }
-    public void savePdf(PdfDocument doc, String path, boolean incremental){
-        nSavePdf(doc.mNativeDocPtr, path, incremental);
-    }
-    private native void nSavePdf(long docPtr, String path, boolean incremental);
+    private native void nSavePdf(long docPtr, String path, int flags);
 
-    private native void nRemoveImage(long docPtr, int pageIndex, long annoPtr);
     //add a image to pdf
     private native long nInsertImage(long docPtr, int pageIndex, Bitmap bitmap, float left, float top, int width, int height);
 

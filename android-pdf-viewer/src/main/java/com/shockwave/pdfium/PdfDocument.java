@@ -3,12 +3,14 @@ package com.shockwave.pdfium;
 import android.graphics.RectF;
 import android.os.ParcelFileDescriptor;
 
+import com.heaven7.android.pdf.INativeOwner;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class PdfDocument {
+public class PdfDocument implements INativeOwner {
 
     public static class Meta {
         String title;
@@ -110,5 +112,8 @@ public class PdfDocument {
 
     public boolean hasPage(int index) {
         return mNativePagesPtr.containsKey(index);
+    }
+    public long getNativePtr(){
+        return mNativeDocPtr;
     }
 }
