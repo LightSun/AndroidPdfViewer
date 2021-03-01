@@ -24,12 +24,7 @@ public final class PdfiumCore {
     private static final String FD_FIELD_NAME = "descriptor";
 
     static {
-        /*System.loadLibrary("c++_shared");
-        System.loadLibrary("modpng");
-        System.loadLibrary("modft2");
-        System.loadLibrary("modpdfium");
-        System.loadLibrary("jniPdfium");*/
-        //System.loadLibrary("c++_shared");
+        System.loadLibrary("c++_shared");
         System.loadLibrary("pdfium");
         System.loadLibrary("pdfium-lib");
     }

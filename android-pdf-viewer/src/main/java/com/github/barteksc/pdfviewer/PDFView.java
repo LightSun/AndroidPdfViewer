@@ -792,7 +792,7 @@ public class PDFView extends RelativeLayout {
      * @param pageIndex the page index
      * @since 10.0.7
      */
-    public void loadPageToCenter(int pageIndex){
+    public void loadPageWithCenter(int pageIndex){
         zoomCenteredTo((getWidth()) * 1.0f / getPageSize(pageIndex).getWidth(),
                 new PointF(getWidth() * 1.0f / 2, getHeight() * 1.0f / 2));
         loadPageByOffset();
