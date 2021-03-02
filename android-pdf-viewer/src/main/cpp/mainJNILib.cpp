@@ -46,6 +46,50 @@ static void destroyLibraryIfNeed() {
     }
 }
 
+static FPDF_BITMAP convertBitmap(JNIEnv* env, jobject bitmap){
+    AndroidBitmapInfo info;
+    int ret;
+    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
+        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
+        return 0;
+    }
+
+    int w = info.width;
+    int h = info.height;
+
+    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        LOGE("Bitmap format must be RGBA_8888");
+        return NULL;
+    }
+
+    int *addr;
+    if ((ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void **>(&addr))) != 0) {
+        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
+        return NULL;
+    }
+    char *tmp;
+    tmp = static_cast<char *>(malloc(h * w * sizeof(uint8_t) * 4));
+    char* add2 = reinterpret_cast<char *>(addr);
+
+    //R、G、B、A  -> bgra
+    int i , idx;
+    for (int ih = 0; ih < h; ++ih) {
+        for (int iw = 0; iw < w; ++iw) {
+            i = ih * w + iw;
+            idx = i * 4;
+            //rgba (android bitmap's raw data is rgba not argb why ??) -> bgra
+            tmp[idx] = add2[i * 4 + 2];
+            tmp[idx + 1] = add2[i * 4 + 1];
+            tmp[idx + 2] = add2[i * 4 ];
+            tmp[idx + 3] = add2[i * 4 + 3];
+        }
+    }
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
+    return pdfBitmap;
+}
+
 struct rgb {
     uint8_t red;
     uint8_t green;
@@ -195,50 +239,15 @@ JNI_FUNC(jlong, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex
         LOGE("nInsertImage: Loaded page is null");
         return 0;
     }
-    AndroidBitmapInfo info;
-    int ret;
-    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
-        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
+    auto pdfBitmap = convertBitmap(env, bitmap);
+    if(pdfBitmap == nullptr){
         return 0;
     }
-
-    int w = info.width;
-    int h = info.height;
-
-    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        LOGE("Bitmap format must be RGBA_8888");
-        return 0;
-    }
-
-    int *addr;
-    if ((ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void **>(&addr))) != 0) {
-        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
-        return 0;
-    }
-    unsigned char *tmp;
-    tmp = static_cast<unsigned char *>(malloc(h * w * sizeof(uint8_t) * 4));
-
-    //convert data: argb -> bgra
-    int i , idx;
-    for (int ih = 0; ih < h; ++ih) {
-        for (int iw = 0; iw < w; ++iw) {
-            i = ih * w + iw;
-            idx = i * 4;
-            tmp[idx] = static_cast<unsigned char>(addr[i] & 0xff);
-            tmp[idx + 1] = static_cast<unsigned char>((addr[i] >> 8) & 0xff);
-            tmp[idx + 2] = static_cast<unsigned char>((addr[i] >> 16) & 0xff);
-            tmp[idx + 3] = static_cast<unsigned char>((addr[i] >> 24) & 0xff);
-        }
-    }
-    AndroidBitmap_unlockPixels(env, bitmap);
-
-    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
-
     auto anno = FPDFPage_CreateAnnot(page, FPDF_ANNOT_STAMP);
     FS_RECTF rect;
 
-    w = width;
-    h = height;
+    int w = width;
+    int h = height;
     //as pdf use left-bottom as origin. we need adjust top.
     // top = (float)FPDF_GetPageHeight(page) - height - top;
     //FS_RECTF rect;
@@ -802,49 +811,7 @@ JNI_FUNC(jobject, PdfiumCore, nativeDeviceCoordsToPage)(JNI_ARGS, jlong pagePtr,
 }//extern C
 
 //------------------------------------------------------------------------------------
-static FPDF_BITMAP convertBitmap(JNIEnv* env, jobject bitmap){
-    AndroidBitmapInfo info;
-    int ret;
-    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
-        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
-        return 0;
-    }
 
-    int w = info.width;
-    int h = info.height;
-
-    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        LOGE("Bitmap format must be RGBA_8888");
-        return NULL;
-    }
-
-    int *addr;
-    if ((ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void **>(&addr))) != 0) {
-        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
-        return NULL;
-    }
-    char *tmp;
-    tmp = static_cast<char *>(malloc(h * w * sizeof(uint8_t) * 4));
-    char* add2 = reinterpret_cast<char *>(addr);
-
-    //R、G、B、A  -> bgra
-    int i , idx;
-    for (int ih = 0; ih < h; ++ih) {
-        for (int iw = 0; iw < w; ++iw) {
-            i = ih * w + iw;
-            idx = i * 4;
-            //rgba (android bitmap's raw data is rgba not argb why ??) -> bgra
-            tmp[idx] = add2[i * 4 + 2];
-            tmp[idx + 1] = add2[i * 4 + 1];
-            tmp[idx + 2] = add2[i * 4 ];
-            tmp[idx + 3] = add2[i * 4 + 3];
-        }
-    }
-    AndroidBitmap_unlockPixels(env, bitmap);
-
-    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
-    return pdfBitmap;
-}
 struct PdfToFdWriter : FPDF_FILEWRITE {
     int dstFd;
 };
@@ -1017,4 +984,46 @@ Java_com_heaven7_android_pdf_PdfAnnotManager_nRemoveImage(JNIEnv *env, jclass cl
         return static_cast<jboolean>(FPDFAnnot_RemoveObject(anno, idx));
     }
     return JNI_FALSE;
+}
+
+static void readAllImpl(JNIEnv *env, jlong doc_ptr, jint page_index, jmethodID mid,jobject cb){
+    DocumentFile *doc = reinterpret_cast<DocumentFile *>(doc_ptr);
+    FPDF_PAGE page = FPDF_LoadPage(doc->pdfDocument, page_index);
+    if (page == NULL) {
+        LOGE("readAllImpl: Loaded page is null");
+        return;
+    }
+    auto c = FPDFPage_GetAnnotCount(page);
+    for (int i = 0; i < c; ++i) {
+        auto anno = FPDFPage_GetAnnot(page, i);
+
+        //need SetAP first. or else cause crash
+        FPDFAnnot_SetAP(anno, FPDF_ANNOT_APPEARANCEMODE_NORMAL, 0);
+        FPDFAnnot_SetFlags(anno, 0);
+        // auto subtype = FPDFAnnot_GetSubtype(annot);
+        auto oc = FPDFAnnot_GetObjectCount(anno);
+        if(oc > 0){
+            auto pT = FPDFAnnot_GetObject(anno, 0);
+            if(FPDFPageObj_GetType(pT) == FPDF_PAGEOBJ_IMAGE){
+                env->CallVoidMethod(cb, mid, page_index, (jlong)anno, (jlong)pT);
+            }
+        }
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_heaven7_android_pdf_PdfAnnotManager_nReadAll(JNIEnv *env, jclass clazz, jlong doc_ptr,
+                                                           jobject cb) {
+    DocumentFile *doc = reinterpret_cast<DocumentFile *>(doc_ptr);
+    auto pageCount = (jint) FPDF_GetPageCount(doc->pdfDocument);
+
+    auto cb_class = env->FindClass("com/heaven7/android/pdf/PdfAnnotManager$NativeCallback");
+    auto mid = env->GetMethodID(cb_class, "onGotImageAnnotation", "(IJJ)V");
+
+    for (int i = 0; i < pageCount; ++i) {
+        readAllImpl(env, doc_ptr, i, mid, cb);
+    }
+
+    env->DeleteLocalRef(cb_class);
 }
