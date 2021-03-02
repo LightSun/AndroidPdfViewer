@@ -67,15 +67,16 @@ public final class PdfAnnotManager{
         if(parts == null){
             return false;
         }
-        long annoPtr = 0;
+        AnnotPart old = null;
         for (AnnotPart part: parts){
             if(part.imgPtr == imgPtr){
-                annoPtr = part.getAnootPtr();
+                old = part;
                 break;
             }
         }
-        if(annoPtr != 0){
-            return nRemoveAnnot(document.getNativePtr(), pageIndex, annoPtr);
+        if(old != null){
+            parts.remove(old);
+            return nRemoveAnnot(document.getNativePtr(), pageIndex, old.annoPtr);
         }
         return false;
     }
