@@ -700,6 +700,15 @@ public class PDFView extends RelativeLayout {
         loadPages();
     }
 
+    /**
+     * redraw all pages
+     * @since 10.1.3
+     */
+    public void redrawAllPages(){
+        cacheManager.recycle();
+        loadPages();
+    }
+
     private void drawWithListener(Canvas canvas, int page, OnDrawListener listener) {
         if (listener != null) {
             float translateX, translateY;
