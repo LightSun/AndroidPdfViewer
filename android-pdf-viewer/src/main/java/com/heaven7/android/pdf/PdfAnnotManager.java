@@ -159,6 +159,14 @@ public final class PdfAnnotManager{
         mPageAnnoMap.clear();
     }
 
+    /**
+     * clear annotations lightly. that means: never clear the pdf's.
+     * @since 10.1.2
+     */
+    public synchronized void clearAnnotsLightly(){
+        mPageAnnoMap.clear();
+    }
+
     private static native boolean nRemoveAnnot(long docPtr, int pageIndex, long annoPtr);
     private static native boolean nRemoveImage(long docPtr, int pageIndex, long annoPtr, long imgPtr);
 
