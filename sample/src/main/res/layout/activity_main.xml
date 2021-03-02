@@ -27,6 +27,7 @@
 	<FrameLayout
 		android:layout_width="match_parent"
 		android:layout_height="match_parent">
+
 		<com.github.barteksc.pdfviewer.PDFView
 			android:id="@+id/pdfView"
 			android:layout_width="match_parent"
@@ -39,6 +40,11 @@
 			android:src="#ffac5e"
 			android:layout_marginTop="200dp"
 			android:layout_marginStart="10px"
+			/>
+
+		<com.heaven7.android.sticker.StickerView
+			android:id="@+id/sticker_view"
+			style="@style/Common_sticker_view"
 			/>
 	</FrameLayout>
 

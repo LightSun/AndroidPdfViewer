@@ -35,6 +35,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -44,9 +45,11 @@ import com.github.barteksc.pdfviewer.listener.OnDrawListener;
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener;
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener;
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener;
+import com.github.barteksc.pdfviewer.mark.ImageMark;
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.github.barteksc.pdfviewer.util.PdfViewUtils;
+import com.heaven7.android.sticker.StickerView;
 import com.heaven7.android.util2.LauncherIntent;
 import com.heaven7.core.util.Toaster;
 import com.heaven7.java.pc.schedulers.Schedulers;
@@ -61,6 +64,7 @@ import org.androidannotations.annotations.OptionsItem;
 import org.androidannotations.annotations.OptionsMenu;
 import org.androidannotations.annotations.ViewById;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
@@ -84,6 +88,9 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
 
     @ViewById(R.id.iv)
     ImageView mIv_iv;
+
+    @ViewById(R.id.sticker_view)
+    com.heaven7.android.sticker.StickerView mStickerView;
 
     @NonConfigurationInstance
     Uri uri;
@@ -118,7 +125,8 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                 .build()
                 .startActivity();
     }
-    private long imgPtr;
+    private LinkedList<Long> mImgPtrs = new LinkedList<Long>();
+    private int topOffset;
 
     @Click(R.id.bt_add_img)
     void clickImgAdd(View v){
@@ -126,7 +134,8 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
     }
     @Click(R.id.bt_remove_img)
     void clickImgRemove(View v){
-        if(imgPtr != 0){
+        Long imgPtr = mImgPtrs.pollLast();
+        if(imgPtr != null && imgPtr != 0){
             pdfView.getPdfFile().removeImage(pdfView.getCurrentPage(), imgPtr);
             pdfView.redrawPages(pdfView.getCurrentPage());
         }
@@ -144,6 +153,34 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
 
     @AfterViews
     void afterViews() {
+        mStickerView.setSticker(R.drawable.ic_launcher);
+        mStickerView.setCallback(new StickerView.Callback() {
+            @Override
+            public void onClickTextArea(StickerView view) {
+                view.rotateSticker(90);
+            }
+            @Override
+            public void onClickSticker(final StickerView view) {
+                Toaster.show(view.getContext(), "Sticker is clicked.");
+
+                Schedulers.io().newWorker().schedule(new Runnable() {
+                    @Override
+                    public void run() {
+                        final Bitmap[] out = new Bitmap[1];
+                        long imgPtr = Utils.addImage(pdfView, view);
+                        mImgPtrs.addLast(imgPtr);
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                pdfView.redrawPages(pdfView.getCurrentPage());
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
         pdfView.setBackgroundColor(Color.LTGRAY);
         if (uri != null) {
             displayFromUri(uri);
@@ -275,12 +312,12 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                     String path = Environment.getExternalStorageDirectory() + "/test1.pdf";
 
                     Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_open_in_browser_grey_700_48dp);
-                    int left = 0 ;
-                    int top = 100;
+                    //Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
                     RectF pageRect = pdfView.getPageRect();
                     System.out.println("page rect: " + pageRect + ", w = " + pageRect.width()
                             + ", h = " + pageRect.height() + " , " + pdfView.getPageSize(page));
                     PdfFile pdfFile = pdfView.getPdfFile();
+
                     RectF srcRect = new RectF(0, 10, 40 , 60);
                     //PdfViewUtils.convertScreenToPdfPageRect()
                     RectF dstRect = PdfViewUtils.convertScreenToPdfPageRect(pdfView, srcRect);
@@ -291,10 +328,12 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
                     float sy = dstRect.height() / srcRect.height();
                     //sx = x / srcRect.left
 
-                    imgPtr = pdfFile.addImage(page, bitmap, dstRect.left * sx , srcRect.top * sy,
+                    long imgPtr = pdfFile.addImage(page, bitmap, srcRect.left * sx , srcRect.top * sy + topOffset,
                             (int) dstRect.width(), (int) dstRect.height()); //left, bottom. the screen values
-                   // pdfFile.addImage(page, bitmap, dstRect);
-                    pdfFile.savePdf(path, 0);
+                    topOffset += 20;
+                    mImgPtrs.addLast(imgPtr);
+
+                   // pdfFile.savePdf(path, 0);
                     System.out.println("testAddImage>>> write ok");
                     Toaster.show(getApplicationContext(), "add image is called");
                     runOnUiThread(new Runnable() {

@@ -72,19 +72,19 @@ public class ImageMark {
         this.pageIndex = pageIndex;
     }
 
-    public void setWidth(int width) {
+    public void setWidth(float width) {
         this.width = width;
     }
 
-    public void setHeight(int height) {
+    public void setHeight(float height) {
         this.height = height;
     }
 
-    public void setLeft(int left) {
+    public void setLeft(float left) {
         this.left = left;
     }
 
-    public void setTop(int top) {
+    public void setTop(float top) {
         this.top = top;
     }
 

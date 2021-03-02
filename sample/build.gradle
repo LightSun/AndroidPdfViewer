@@ -32,4 +32,5 @@ dependencies {
     annotationProcessor "org.androidannotations:androidannotations:4.6.0"
 
     //implementation 'com.github.LightSun:PdfiumAndroid:2.0.1'
+    implementation "com.github.LightSun:Android-StickerView:1.0.6"
 }

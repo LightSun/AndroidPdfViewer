@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
+import com.heaven7.android.sticker.StickerView;
 import com.heaven7.core.util.Toaster;
 
 
@@ -19,7 +20,7 @@ public class TestStickerViewActivity extends AppCompatActivity {
         mStickerView = findViewById(R.id.sticker_view);
 
         mStickerView.setSticker(R.drawable.ic_launcher);
-        mStickerView.setOnClickListener(new StickerView.OnClickListener() {
+        mStickerView.setCallback(new StickerView.Callback() {
             @Override
             public void onClickTextArea(StickerView view) {
                 view.rotateSticker(90);

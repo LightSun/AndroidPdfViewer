@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="StickerView">
+    <declare-styleable name="StickerView2">
         <!-- init sticker width and height -->
         <attr name="stv_sticker_init_width" format="dimension|reference"/>
         <attr name="stv_sticker_init_height" format="dimension|reference"/>

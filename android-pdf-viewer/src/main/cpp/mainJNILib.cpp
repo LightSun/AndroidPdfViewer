@@ -195,7 +195,6 @@ JNI_FUNC(jlong, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex
         LOGE("nInsertImage: Loaded page is null");
         return 0;
     }
-
     AndroidBitmapInfo info;
     int ret;
     if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
@@ -256,7 +255,7 @@ JNI_FUNC(jlong, PdfiumCore, nInsertImage)(JNI_ARGS, jlong docPtr, jint pageIndex
 
     FPDFImageObj_SetBitmap(&page, 0, image_object, pdfBitmap);
     FPDFImageObj_SetMatrix(image_object, w, 0, 0, h, 0, 0);
-    FPDFPageObj_Transform(image_object, 1, 0, 0, 1, 0, top);
+    FPDFPageObj_Transform(image_object, 1, 0, 0, 1, left, top);
     FPDFAnnot_AppendObject(anno, image_object);
     LOGD("transform: left = %.2f, top = %.2f, pageW = %.2f, pageH = %.2f", left, top,
          (float) FPDF_GetPageWidth(page), (float) FPDF_GetPageHeight(page));
@@ -803,6 +802,49 @@ JNI_FUNC(jobject, PdfiumCore, nativeDeviceCoordsToPage)(JNI_ARGS, jlong pagePtr,
 }//extern C
 
 //------------------------------------------------------------------------------------
+static FPDF_BITMAP convertBitmap(JNIEnv* env, jobject bitmap){
+    AndroidBitmapInfo info;
+    int ret;
+    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
+        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
+        return 0;
+    }
+
+    int w = info.width;
+    int h = info.height;
+
+    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
+        LOGE("Bitmap format must be RGBA_8888");
+        return NULL;
+    }
+
+    int *addr;
+    if ((ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void **>(&addr))) != 0) {
+        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
+        return NULL;
+    }
+    char *tmp;
+    tmp = static_cast<char *>(malloc(h * w * sizeof(uint8_t) * 4));
+    char* add2 = reinterpret_cast<char *>(addr);
+
+    //R、G、B、A  -> bgra
+    int i , idx;
+    for (int ih = 0; ih < h; ++ih) {
+        for (int iw = 0; iw < w; ++iw) {
+            i = ih * w + iw;
+            idx = i * 4;
+            //rgba (android bitmap's raw data is rgba not argb why ??) -> bgra
+            tmp[idx] = add2[i * 4 + 2];
+            tmp[idx + 1] = add2[i * 4 + 1];
+            tmp[idx + 2] = add2[i * 4 ];
+            tmp[idx + 3] = add2[i * 4 + 3];
+        }
+    }
+    AndroidBitmap_unlockPixels(env, bitmap);
+
+    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
+    return pdfBitmap;
+}
 struct PdfToFdWriter : FPDF_FILEWRITE {
     int dstFd;
 };
@@ -888,50 +930,15 @@ Java_com_heaven7_android_pdf_PdfAnnotManager_nAddImage(JNIEnv *env, jclass clazz
         return 0;
     }
     FPDF_ANNOTATION anno = reinterpret_cast<FPDF_ANNOTATION>(anno_ptr);
-
-    AndroidBitmapInfo info;
-    int ret;
-    if ((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
-        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
+    FPDF_BITMAP pdfBitmap = convertBitmap(env, bitmap);
+    if(pdfBitmap == nullptr){
         return 0;
     }
-
-    int w = info.width;
-    int h = info.height;
-
-    if (info.format != ANDROID_BITMAP_FORMAT_RGBA_8888) {
-        LOGE("Bitmap format must be RGBA_8888");
-        return 0;
-    }
-
-    int *addr;
-    if ((ret = AndroidBitmap_lockPixels(env, bitmap, reinterpret_cast<void **>(&addr))) != 0) {
-        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
-        return 0;
-    }
-    unsigned char *tmp;
-    tmp = static_cast<unsigned char *>(malloc(h * w * sizeof(uint8_t) * 4));
-
-    //convert data: argb -> bgra
-    int i , idx;
-    for (int ih = 0; ih < h; ++ih) {
-        for (int iw = 0; iw < w; ++iw) {
-            i = ih * w + iw;
-            idx = i * 4;
-            tmp[idx] = static_cast<unsigned char>(addr[i] & 0xff);
-            tmp[idx + 1] = static_cast<unsigned char>((addr[i] >> 8) & 0xff);
-            tmp[idx + 2] = static_cast<unsigned char>((addr[i] >> 16) & 0xff);
-            tmp[idx + 3] = static_cast<unsigned char>((addr[i] >> 24) & 0xff);
-        }
-    }
-    AndroidBitmap_unlockPixels(env, bitmap);
-
-    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx(w, h, FPDFBitmap_BGRA, tmp, info.stride);
 
     FS_RECTF rect;
 
-    w = width;
-    h = height;
+    int w = width;
+    int h = height;
     //as pdf use left-bottom as origin. we need adjust top.
     if(!topAsBottom){
          top = (float)FPDF_GetPageHeight(page) - height - top;
@@ -944,13 +951,13 @@ Java_com_heaven7_android_pdf_PdfAnnotManager_nAddImage(JNIEnv *env, jclass clazz
     FPDFAnnot_SetRect(anno, &rect);
 
     FPDF_PAGEOBJECT image_object = FPDFPageObj_NewImageObj(doc->pdfDocument);
-    //auto image_bitmap = FPDFBitmap_Create(w, h, 1);
-    //FPDFBitmap_FillRect(image_bitmap, 0, 0, w, h, 0xeeeecccc);
-    //FPDFImageObj_SetBitmap(&page, 0, image_object, image_bitmap);
+    /*auto image_bitmap = FPDFBitmap_Create(w, h, 1);
+    FPDFBitmap_FillRect(image_bitmap, 0, 0, w, h, 0xeeeecccc);
+    FPDFImageObj_SetBitmap(&page, 0, image_object, image_bitmap);*/
 
     FPDFImageObj_SetBitmap(&page, 0, image_object, pdfBitmap);
     FPDFImageObj_SetMatrix(image_object, w, 0, 0, h, 0, 0);
-    FPDFPageObj_Transform(image_object, 1, 0, 0, 1, 0, top);
+    FPDFPageObj_Transform(image_object, 1, 0, 0, 1, left, top);
     FPDFAnnot_AppendObject(anno, image_object);
     LOGD("transform: left = %.2f, top = %.2f, pageW = %.2f, pageH = %.2f", left, top,
          (float) FPDF_GetPageWidth(page), (float) FPDF_GetPageHeight(page));

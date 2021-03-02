@@ -6,7 +6,6 @@ import android.util.SparseArray;
 import com.shockwave.pdfium.PdfDocument;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -17,7 +16,7 @@ import java.util.List;
 public final class PdfAnnotManager{
 
     private final PdfDocument document;
-    private final SparseArray<AnnotPart> mPageAnnoMap = new SparseArray<>();
+    private final SparseArray<List<AnnotPart>> mPageAnnoMap = new SparseArray<>();
 
     public PdfAnnotManager(PdfDocument docPtr) {
         this.document = docPtr;
@@ -51,37 +50,32 @@ public final class PdfAnnotManager{
      * @return the real image ptr.
      */
     public synchronized long addImage(int pageIndex, Bitmap bitmap, float left, float top, int width, int height, boolean topAsBottom){
-        AnnotPart part = mPageAnnoMap.get(pageIndex);
-        if(part == null){
-            part = new AnnotPart(nCreateAnnot(document.getNativePtr(), pageIndex));
-            mPageAnnoMap.put(pageIndex, part);
+        List<AnnotPart> parts = mPageAnnoMap.get(pageIndex);
+        if(parts == null){
+            parts = new ArrayList<>();
+            mPageAnnoMap.put(pageIndex, parts);
         }
-        long imgPtr = nAddImage(document.getNativePtr(), pageIndex, part.getNativePtr(), bitmap, left, top, width, height, topAsBottom);
+        long annot = nCreateAnnot(document.getNativePtr(), pageIndex);
+        long imgPtr = nAddImage(document.getNativePtr(), pageIndex, annot, bitmap, left, top, width, height, topAsBottom);
         if(imgPtr != 0){
-            part.addImageObject(imgPtr);
+            parts.add(new AnnotPart(annot, imgPtr));
         }
         return imgPtr;
     }
     public synchronized boolean removeImage(int pageIndex, long imgPtr){
-        AnnotPart part = mPageAnnoMap.get(pageIndex);
-        if(part == null){
+        List<AnnotPart> parts = mPageAnnoMap.get(pageIndex);
+        if(parts == null){
             return false;
         }
-        boolean result = nRemoveImage(document.getNativePtr(), pageIndex, part.getNativePtr(), imgPtr);
-        if(result){
-            return part.removeImageObject(imgPtr);
+        long annoPtr = 0;
+        for (AnnotPart part: parts){
+            if(part.imgPtr == imgPtr){
+                annoPtr = part.getAnootPtr();
+                break;
+            }
         }
-        return false;
-    }
-    public synchronized List<Long> getImages(int pageIndex){
-        AnnotPart part = mPageAnnoMap.get(pageIndex);
-        return part != null ? part.imageObjPtrs : Collections.<Long>emptyList();
-    }
-
-    public boolean removeAnnotation(int pageIndex){
-        AnnotPart part = mPageAnnoMap.get(pageIndex);
-        if(part != null){
-            return nRemoveAnnot(document.getNativePtr(), pageIndex, part.getNativePtr());
+        if(annoPtr != 0){
+            return nRemoveAnnot(document.getNativePtr(), pageIndex, annoPtr);
         }
         return false;
     }
@@ -93,30 +87,21 @@ public final class PdfAnnotManager{
     //add an image to annot and return image object. topAsBottom default is true. because pdf use left-bottom.
     private static native long nAddImage(long docPtr, int pageIndex, long annoPtr, Bitmap bitmap, float left, float top, int width, int height, boolean topAsBottom);
 
-    private static class AnnotPart implements INativeOwner{
+    //one annot -> one image
+    private static class AnnotPart{
         private long annoPtr;
-        private List<Long> imageObjPtrs;
+        private Long imgPtr;
 
-        AnnotPart(long annoPtr) {
+        public AnnotPart(long annoPtr, Long imgPtr) {
             this.annoPtr = annoPtr;
+            this.imgPtr = imgPtr;
         }
-        @Override
-        public long getNativePtr() {
+
+        public long getAnootPtr() {
             return annoPtr;
         }
-        public void addImageObject(long imgPtr) {
-            if(imageObjPtrs == null){
-                imageObjPtrs = new ArrayList<>();
-            }
-            if(imageObjPtrs.contains(imgPtr)){
-                imageObjPtrs.add(imgPtr);
-            }
-        }
-        public boolean removeImageObject(long imgPtr){
-            return imageObjPtrs.remove(imgPtr);
-        }
-        public void clearImageObjects(){
-            imageObjPtrs.clear();
+        public long getImagePtr(){
+            return imgPtr;
         }
     }
 }

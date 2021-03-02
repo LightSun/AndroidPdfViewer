@@ -14,7 +14,7 @@
         android:textAllCaps="false"
         android:gravity="center"
         />
-    <com.github.barteksc.sample.StickerView
+    <com.heaven7.android.sticker.StickerView
         android:id="@+id/sticker_view"
         android:layout_above="@+id/bt"
         style="@style/Common_sticker_view"
