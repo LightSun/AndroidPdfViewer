@@ -140,6 +140,23 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
             pdfView.redrawPages(pdfView.getCurrentPage());
         }
     }
+    @Click(R.id.bt_add_sticker)
+    void clickAddSticker(View view){
+        Schedulers.io().newWorker().schedule(new Runnable() {
+            @Override
+            public void run() {
+                long imgPtr = Utils.addImage(pdfView, mStickerView);
+                mImgPtrs.addLast(imgPtr);
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        pdfView.redrawPages(pdfView.getCurrentPage());
+                    }
+                });
+            }
+        });
+    }
     void launchPicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/pdf");
@@ -162,22 +179,7 @@ public class PDFViewActivity extends AppCompatActivity implements OnPageChangeLi
             @Override
             public void onClickSticker(final StickerView view) {
                 Toaster.show(view.getContext(), "Sticker is clicked.");
-
-                Schedulers.io().newWorker().schedule(new Runnable() {
-                    @Override
-                    public void run() {
-                        final Bitmap[] out = new Bitmap[1];
-                        long imgPtr = Utils.addImage(pdfView, view);
-                        mImgPtrs.addLast(imgPtr);
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                pdfView.redrawPages(pdfView.getCurrentPage());
-                            }
-                        });
-                    }
-                });
+                clickAddSticker(null);
             }
         });
 

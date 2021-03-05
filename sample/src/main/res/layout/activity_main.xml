@@ -22,6 +22,13 @@
 			android:textAllCaps="false"
 			android:text="img remove"
 			/>
+		<Button
+			android:id="@+id/bt_add_sticker"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:textAllCaps="false"
+			android:text="sticker add"
+			/>
 	</LinearLayout>
 
 	<FrameLayout
