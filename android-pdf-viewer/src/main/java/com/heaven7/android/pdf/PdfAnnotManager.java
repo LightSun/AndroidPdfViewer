@@ -45,20 +45,20 @@ public final class PdfAnnotManager{
         nReadAll(document.getNativePtr(), cb);
     }
     /**
-     * add image to pdf.
+     * add image to pdf. bitmap's with and height should be the times of @width @height.
      * @param pageIndex the page index
      * @param bitmap the bitmap to add
      * @param left the left cors
      * @param top the top cors
-     * @param width the width
-     * @param height the height
+     * @param width the width of real pdf image
+     * @param height the height of real pdf image
      * @return the annot ptr.
      */
     public long addImage(int pageIndex, Bitmap bitmap, float left, float top, int width, int height){
         return addImage(pageIndex, bitmap, left, top, width, height, true);
     }
     /**
-     * add image to pdf.
+     * add image to pdf.  bitmap's with and height should be the times of @width @height.
      * @param pageIndex the page index
      * @param bitmap the bitmap to add
      * @param left the left cors
@@ -72,7 +72,7 @@ public final class PdfAnnotManager{
         return addAnnot(pageIndex, bitmap, left, top, width, height, topAsBottom);
     }
     /**
-     * add annot to pdf.
+     * add annot to pdf.  bitmap's with and height should be the times of @width @height.
      * @param pageIndex the page index
      * @param bitmap the bitmap to add
      * @param left the left cors
