@@ -1,12 +1,12 @@
 
-# Looking for new maintainer!
+# Android Pdf Viewer
 - fork from 'barteksc/AndroidPdfViewer'. but add new features. 
 - compile'd native of pdfium from the google source at 2021.
 - 
 # features
 - support for transform screen x,y to pdf pages'.
 - support add/remove image for pdf page.
-- ...
+- add lot of new methods.  like getPageRotation.
 
 # Gradle
 ```java
