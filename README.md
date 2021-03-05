@@ -11,5 +11,5 @@ allprojects {
 			maven { url 'https://jitpack.io' }
 		}
 	}
-  implementation 'com.github.LightSun:AndroidPdfViewer:10.1.2'
+  implementation 'com.github.LightSun:AndroidPdfViewer:10.1.4'
 ```
