@@ -35,6 +35,18 @@ public final class PdfiumCore {
     public void savePdf(PdfDocument doc, String path, int flags){
         nSavePdf(doc.mNativeDocPtr, path, flags);
     }
+
+    /**
+     * get page rotation in degrees
+     * @param doc the doc
+     * @param pageIndex the page index
+     * @return page rotation
+     * @since 10.1.4
+     */
+    public int getPageRotation(PdfDocument doc, int pageIndex){
+        return nGetPageRotation(doc.mNativeDocPtr, pageIndex);
+    }
+    private static native int nGetPageRotation(long docPtr, int pageIndex);
     private native void nSavePdf(long docPtr, String path, int flags);
 
     //add a image to pdf

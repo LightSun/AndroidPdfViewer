@@ -110,7 +110,7 @@ public class PdfFile {
      * @param top the top
      * @param w the w
      * @param h the h
-     * @return the image ptr
+     * @return the annot ptr
      * @since 10.0.7
      */
     public long addImage(int pageIndex, Bitmap bitmap,float left, float top, int w, int h){
@@ -120,7 +120,7 @@ public class PdfFile {
     /**
      * remove image to from pdf annotation
      * @param pageIndex the page index
-     * @param imgPtr the image ptr which is from {{@link #addImage(int, Bitmap, float, float, int, int)}}.
+     * @param imgPtr the annot ptr which is from {{@link #addImage(int, Bitmap, float, float, int, int)}}.
      * @since 10.0.7
      */
     public boolean removeImage(int pageIndex, long imgPtr){
@@ -135,6 +135,16 @@ public class PdfFile {
      */
     public void savePdf(String path,int flags){
         pdfiumCore.savePdf(pdfDocument, path, 0);
+    }
+
+    /**
+     * get the page rotation
+     * @param pageIndex the page index
+     * @return the rotation
+     * @since 10.1.4
+     */
+    public int getPageRotation(int pageIndex){
+        return pdfiumCore.getPageRotation(pdfDocument, pageIndex);
     }
 
     private void setup(Size viewSize) {

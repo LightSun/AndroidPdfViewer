@@ -870,6 +870,19 @@ Java_com_shockwave_pdfium_PdfiumCore_nSavePdf(JNIEnv *env, jobject thiz, jlong d
         env->ReleaseStringUTFChars(path, str);
     }
 }
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_shockwave_pdfium_PdfiumCore_nGetPageRotation(JNIEnv *env, jclass jc, jlong doc_ptr,
+                                                      jint page_index) {
+    DocumentFile *doc = reinterpret_cast<DocumentFile *>(doc_ptr);
+    FPDF_PAGE page = FPDF_LoadPage(doc->pdfDocument, page_index);
+    if (page == NULL) {
+        LOGE("nGetPageRotation: Loaded page is null");
+        return -1;
+    }
+    return FPDFPage_GetRotation(page);
+}
+//--------------------------------------------
 
 extern "C"
 JNIEXPORT jlong JNICALL
